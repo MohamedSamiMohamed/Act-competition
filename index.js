@@ -6,7 +6,7 @@ const hrmsRouter= require('./routes/hrmsRoutes/routes');
 const users=require('./routes/users')
 const auth=require('./routes/auth')
 const express = require('express');
-
+const cors=require('cors')
 const app = express();
 
 mongoose.connect('mongodb://localhost/Act', 
@@ -17,6 +17,7 @@ useCreateIndex: true
 })
   .then(() => console.log('Connected to MongoDB...'))
   .catch(err => console.error('Could not connect to MongoDB...'));
+app.use(cors())
 app.use(morgan('dev'))
 app.use(express.json());
 app.use('/api/hrms',hrmsRouter);
