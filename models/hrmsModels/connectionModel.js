@@ -65,4 +65,4 @@ return schema.validate(config)
 }
 
 exports.validate=validateConfig
-exports.connectionSchema=connection
+exports.connectionModel=connection

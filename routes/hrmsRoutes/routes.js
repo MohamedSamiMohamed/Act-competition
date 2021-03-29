@@ -1,4 +1,4 @@
-const {validate,connectionSchema}= require('../../models/hrmsModels/connectionModel');
+const {validate,connectionModel}= require('../../models/hrmsModels/connectionModel');
 const mongoose = require('mongoose');
 const express = require('express')
 const router = express.Router()
@@ -20,7 +20,7 @@ else{
         return res.status(400).send('No such user with the given ID')
     }
 else{
-const config=new connectionSchema({
+const config=new connectionModel({
     userID: userId,
     server: req.body.server,  
     authentication: {

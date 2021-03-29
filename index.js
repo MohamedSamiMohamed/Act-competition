@@ -1,3 +1,4 @@
+const morgan=require('morgan')
 const Joi = require('joi');
 const mongoose = require('mongoose');
 const pmsRouter= require('./routes/pmsRoutes/routes');
@@ -16,7 +17,7 @@ useCreateIndex: true
 })
   .then(() => console.log('Connected to MongoDB...'))
   .catch(err => console.error('Could not connect to MongoDB...'));
-
+app.use(morgan('dev'))
 app.use(express.json());
 app.use('/api/hrms',hrmsRouter);
 app.use('/api/users',users)
