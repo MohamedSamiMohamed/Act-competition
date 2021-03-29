@@ -71,6 +71,20 @@ router.post('/connect',async (req,res)=>{
 }
 })
 
+router.get('/isClient',async (req,res)=>{
+    const userId = req.header('x-userID');
+    if (!userId) return res.status(401).send('Access denied. No userID provided.');
+    else{
+        let connection=await connectionModel.findOne({userID: userId})
+        console.log(connection)
+        if(!connection){
+        return res.send(false)
+    }
+    else{
+        res.send(true)
+    }
+}
+})
 
 
 
