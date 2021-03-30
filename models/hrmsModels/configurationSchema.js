@@ -2,19 +2,20 @@ const Joi = require('joi');
 const mongoose = require('mongoose');
 
 const confSchema = new mongoose.Schema({
-    name: {
-        type: Boolean,
-        required: true
+    userID:{
+        required:true,
+        unique:true,
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'users'
     },
   trans: 
     [
-        {
-            field: { 
-                sun_column: {
+            { 
+                sunColumn: {
                     type: String,
                     required: true
                 },
-                mapped_val: {
+                mappedVal: {
                     type: String,
                     required: true
                 },
@@ -23,7 +24,6 @@ const confSchema = new mongoose.Schema({
                     required: true
                 } 
             }
-        }
     ]
 });
 
@@ -31,14 +31,14 @@ const Configuration = mongoose.model('Configuration', confSchema);
 
 function validateConf(Configuration){
     const validSchema = Joi.object({
-        name: Joi.string().trim().required(),
-        trans: Joi.array().items([{
-            sun_column: Joi.string().uppercase().trim().required(),
-            mapped_val: Joi.string().trim().required(),
-            isConst: Joi.Boolean().required()
-        }])
+        trans: Joi.array().min(5).items(Joi.object({
+            sunColumn: Joi.string().uppercase().trim().required(),
+            mappedVal: Joi.string().trim().required(),
+            isConst: Joi.boolean().required()
+        }))
     });
     return validSchema.validate(Configuration)
 }
 
-module.exports = validateConf(Configuration);
+exports.validateConfiguration = validateConf;
+exports.sunHrmsConfig=Configuration

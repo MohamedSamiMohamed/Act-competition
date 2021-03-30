@@ -5,6 +5,7 @@ const mongoose  = require('mongoose');
 const configurationSchema = new mongoose.Schema({
 userID:{
     required:true,
+    unique:true,
     type:mongoose.Schema.Types.ObjectId,
     ref:'users'
 },

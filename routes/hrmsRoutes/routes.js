@@ -1,6 +1,7 @@
 const {validate,connectionModel}= require('../../models/hrmsModels/connectionModel');
 const sunConnection=require('../../models/sunModel')
 const mongoose = require('mongoose');
+const {validateConfiguration,sunHrmsConfig}=require('../../models/hrmsModels/configurationSchema')
 const express = require('express')
 const router = express.Router()
 const {User}= require('../../models/user');
@@ -40,8 +41,13 @@ const config=new connectionModel({
         rowCollectionOnRequestCompletion: true
     }
 })
+try{
 await config.save()
 res.send(config)
+}
+catch(err){
+    res.status(400).send('This user already uploaded connection string before')
+}
 }
 }
 }
@@ -85,6 +91,48 @@ router.get('/isClient',async (req,res)=>{
     }
 }
 })
+
+
+router.post('/configuration',async(req, res) => {
+    const userId = req.header('x-userID');
+    if (!userId) return res.status(401).send('Access denied. No userID provided.');
+    else {
+        let user=await User.findOne({_id: userId})
+        if(!user){
+        return res.status(400).send('No such user with the given ID')
+    }
+    else{
+    const {error} =validateConfiguration(req.body)
+    if(error){
+        res.status(400).send(error.details[0].message)
+        return 
+    }
+    else{
+        let trans=[]
+        req.body.trans.forEach(element=>{
+            trans.push({
+                sunColumn: element.sunColumn,
+                mappedVal: element.mappedVal,
+                isConst: element.isConst
+            })
+        })
+        conf = new sunHrmsConfig({
+            userID: userId,
+            trans
+        })
+        try{
+        await conf.save();
+        res.send('Configuration Settings Uploaded Successfully!');
+    }
+    catch(err){
+        res.status(400).send('this user already has a configuration before')
+    }
+    }
+}
+}
+})
+
+
 
 
 
