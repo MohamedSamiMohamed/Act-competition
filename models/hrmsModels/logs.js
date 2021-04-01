@@ -14,14 +14,15 @@ status:{
     enum:['posted','hard-posted','missed','pending'],
     default:'pending'
 },
-date:{
+timeStamp:{
     required:true,
     type: Date,
     default: Date.now()
+},
+month:{
+    required:true,
+    type: Number
 }
 })
 const logModel=mongoose.model('HRMS-logs',logSchema)
-
-    
-//exports.validate=validateConfig
-exports.Log=logModel
+exports.HrmsLog=logModel

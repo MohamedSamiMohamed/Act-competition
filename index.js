@@ -8,6 +8,7 @@ const auth=require('./routes/auth')
 const express = require('express');
 const cors=require('cors')
 const app = express();
+const {forceTransform}=require('./transformation/hrms')
 
 mongoose.connect('mongodb://localhost/Act', 
 {useNewUrlParser: true, 
