@@ -70,7 +70,7 @@ try{
     requestString = requestString.substring(0, requestString.length - 1);
     if(forceTransFlag==false){
     let d=new Date()
-    requestString+=` FROM JV_Report_Details_Tbl WHERE The_Month=${ d.getMonth()+1} AND User_ID=${1};`
+    requestString+=` FROM JV_Report_Details_Tbl WHERE The_Month=${ d.getMonth()} AND User_ID=${1};`
     }
     else{
     requestString+=` FROM JV_Report_Details_Tbl WHERE The_Month=${forcedMonth} AND User_ID=${1};`
@@ -178,7 +178,6 @@ return new Promise((resolve,reject)=>{
         }
         else{
         updateLog(userID,month)
-
         }
         resolve(1)
     });  

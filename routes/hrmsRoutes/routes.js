@@ -8,6 +8,8 @@ const {HrmsLog}= require('../../models/hrmsModels/logs');
 const { func } = require('joi');
 const {forceTransform}=require('../../transformation/hrms')
 
+
+
 router.post('/configStr',async(req,res)=>{
 const result=validate(req.body)
 if(result.error){
@@ -115,7 +117,6 @@ router.post('/forceTrans',async(req,res)=>{
                 if(hrmsLog.status==='missed'){
                     try{
                     await forceTransform(month,userId)
-                    console.log('done done')
                     res.send('Transformation is done and this month is currently posted, check to hard-post it.')
                     }
                     catch(err){
@@ -162,7 +163,7 @@ router.get('/isClient',async (req,res)=>{
     if (!userId) return res.status(401).send('Access denied. No userID provided.');
     else{
         let connection=await connectionModel.findOne({userID: userId})
-        console.log(connection)
+        //console.log(connection)
         if(!connection){
         return res.send(false)
     }
