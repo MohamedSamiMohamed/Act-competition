@@ -6,6 +6,7 @@ const router = express.Router()
 const {User}= require('../../models/user');
 const {HrmsLog}= require('../../models/hrmsModels/logs');
 const { func } = require('joi');
+const {forceTransform}=require('../../transformation/hrms')
 
 router.post('/configStr',async(req,res)=>{
 const result=validate(req.body)
@@ -50,6 +51,88 @@ catch(err){
 }
 })
 
+router.post('/configuration',async(req, res) => {
+    const userId = req.header('x-userID');
+    if (!userId) return res.status(401).send('Access denied. No userID provided.');
+    else {
+        let user=await User.findOne({_id: userId})
+        if(!user){
+        return res.status(400).send('No such user with the given ID')
+    }
+    else{
+    const {error} =validateConfiguration(req.body)
+    if(error){
+        res.status(400).send(error.details[0].message)
+        return 
+    }
+    else{
+        let trans=[]
+        req.body.trans.forEach(element=>{
+            trans.push({
+                sunColumn: element.sunColumn,
+                mappedVal: element.mappedVal,
+                isConst: element.isConst
+            })
+        })
+        conf = new sunHrmsConfig({
+            userID: userId,
+            trans
+        })
+        try{
+        await conf.save();
+        res.send('Configuration Settings Uploaded Successfully!');
+    }
+    catch(err){
+        res.status(400).send('this user already has a configuration before')
+    }
+    }
+}
+}
+})
+
+router.post('/forceTrans',async(req,res)=>{
+    let month;
+    if(req.body['month']){
+        month=req.body['month']
+    }
+    else{
+        return res.status(400).send('request body must contain month')
+    }
+    const userId = req.header('x-userID');
+    if (!userId) return res.status(401).send('Access denied. No userID provided.');
+    else {
+        let user=await User.findOne({_id: userId})
+        if(!user){
+        return res.status(400).send('No such user with the given ID')
+    }
+    else{
+
+        let hrmsLog=await HrmsLog.findOne({userID:userId,month:month})
+            if(!hrmsLog){
+                return res.status(400).send('this month has not transformed yet')
+            }
+            else{
+                if(hrmsLog.status==='missed'){
+                    try{
+                    await forceTransform(month,userId)
+                    console.log('done done')
+                    res.send('Transformation is done and this month is currently posted, check to hard-post it.')
+                    }
+                    catch(err){
+                        res.status(400).send(`something went wrong, ${err.message}`)
+                    }
+                    
+                }
+                else{
+                    res.status(400).send('This month is not missed to be transformed by forcing')
+                }
+            
+
+    }
+}
+}
+})
+
 
 // router.post('/connect',async (req,res)=>{
 //     const userId = req.header('x-userID');
@@ -89,45 +172,6 @@ router.get('/isClient',async (req,res)=>{
 }
 })
 
-
-router.post('/configuration',async(req, res) => {
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-    const {error} =validateConfiguration(req.body)
-    if(error){
-        res.status(400).send(error.details[0].message)
-        return 
-    }
-    else{
-        let trans=[]
-        req.body.trans.forEach(element=>{
-            trans.push({
-                sunColumn: element.sunColumn,
-                mappedVal: element.mappedVal,
-                isConst: element.isConst
-            })
-        })
-        conf = new sunHrmsConfig({
-            userID: userId,
-            trans
-        })
-        try{
-        await conf.save();
-        res.send('Configuration Settings Uploaded Successfully!');
-    }
-    catch(err){
-        res.status(400).send('this user already has a configuration before')
-    }
-    }
-}
-}
-})
 
 router.post('/retrieve',async(req,res)=>{
     let month;
@@ -200,5 +244,4 @@ router.post('/acceptTrans',async(req,res)=>{
 }
 })
 
-//transform()
 module.exports=router
