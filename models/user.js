@@ -27,7 +27,7 @@ const user=mongoose.model('users',userSchema)
 function validateUser(user){
     const schema = Joi.object({
         companyName: Joi.string().min(3).max(50).required(),
-        userName: Joi.string().required().min(3).max(50),
+        userName: Joi.string().required().min(5).max(50),
         password: Joi.string().required().min(5).max(255)
       });
       return schema.validate(user)

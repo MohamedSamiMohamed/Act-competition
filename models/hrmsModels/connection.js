@@ -23,7 +23,7 @@ authentication:{
         userName: {
             required:true,
             type:String,
-            minlength:3,
+            minlength:2,
             maxlength:50
         },
         password: {
@@ -57,7 +57,7 @@ const connection=mongoose.model('HRMS-database-connection',configurationSchema)
 function validateConfig(config){
 const schema=Joi.object({
     server:Joi.string().min(3).required(),
-    userName:Joi.string().min(3).required(),
+    userName:Joi.string().min(2).required(),
     password:Joi.string().min(3).required(),
     database:Joi.string().min(3).required()
 })
