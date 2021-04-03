@@ -36,7 +36,9 @@ const config=new connectionModel({
         }
     },
     options: {
-        encrypt: true,
+        port:1433,
+        encrypt: false,
+        instancename: "SQLEXPRESS",
         database: req.body.database,
         rowCollectionOnRequestCompletion: true
     }
