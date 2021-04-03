@@ -167,10 +167,24 @@ router.get('/isClient',async (req,res)=>{
         let connection=await connectionModel.findOne({userID: userId})
         //console.log(connection)
         if(!connection){
-        return res.send(false)
+        return res.status(200).send(false)
     }
     else{
-        res.send(true)
+        return res.status(200).send(true)
+    }
+}
+})
+
+router.get('/configured',async (req,res)=>{
+    const userId = req.header('x-userID');
+    if (!userId) return res.status(401).send('Access denied. No userID provided.');
+    else{
+        let configured=await sunHrmsConfig.findOne({userID: userId})
+        if(!configured){
+        return res.status(200).send(false)
+    }
+    else{
+        return res.status(200).send(true)
     }
 }
 })
