@@ -261,4 +261,19 @@ router.post('/acceptTrans',async(req,res)=>{
 }
 })
 
+// router.get('/monthsStatus',(req,res)=>{
+//     if (!userId) return res.status(401).send('Access denied. No userID provided.');
+//     else {
+//         let user=await User.findOne({_id: userId})
+//         if(!user){
+//         return res.status(400).send('No such user with the given ID')
+//     }
+//     else{
+//         let logs=await HrmsLog.find({userID:userId}).select({"month":1,"status":1,"_id":0})
+
+//     }
+// }
+// })
+
+
 module.exports=router

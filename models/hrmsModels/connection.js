@@ -35,6 +35,14 @@ authentication:{
     }
 },
 options:{
+    port:{
+        required:true,
+        type:Number
+    },
+    instancename:{
+        required:true,
+        type:String
+    },
     encrypt: {
         required:true,
         type:Boolean
