@@ -9,8 +9,9 @@ const express = require('express');
 const cors=require('cors')
 const app = express();
 const {forceTransform}=require('./transformation/hrms')
-
-mongoose.connect('mongodb+srv://Mohamed:Abc12345!@cluster0.no0ea.mongodb.net/test', 
+let localDB='mongodb://localhost/Act'
+let clusterDB='mongodb+srv://Mohamed:Abc12345!@cluster0.no0ea.mongodb.net/test'
+mongoose.connect(localDB, 
 {useNewUrlParser: true, 
 useUnifiedTopology: true,
 useFindAndModify: false,

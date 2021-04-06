@@ -137,29 +137,6 @@ router.post('/forceTrans',async(req,res)=>{
 })
 
 
-// router.post('/connect',async (req,res)=>{
-//     const userId = req.header('x-userID');
-//     if (!userId) return res.status(401).send('Access denied. No userID provided.');
-//     else{
-//         let user=await User.findOne({_id: userId})
-//         if(!user){
-//         return res.status(400).send('No such user with the given ID')
-//     }
-//     else{
-//         let connectionString=await connectionModel.findOne({userID:userId}).select({"_id":0,"userID":0,"__v":0})
-//         var connection = new Connection(connectionString); 
-//         connection.on('connect',(err)=> {  
-//             if(err) return res.status(400).send(err.message)
-//             else{
-//             res.send('connection done successfully, the connection string is'+connectionString[0])
-//             //execute your queries here 
-//             }
-//         });
-//         connection.connect();
-//     }   
-// }
-// })
-
 router.get('/isClient',async (req,res)=>{
     const userId = req.header('x-userID');
     if (!userId) return res.status(401).send('Access denied. No userID provided.');
@@ -218,7 +195,7 @@ router.post('/retrieve',async(req,res)=>{
                 hrmsLog.status='missed',
                 hrmsLog.timeStamp= Date.now()
                 await hrmsLog.save()
-                res.send('This transformation is retrieved successfully.')
+                return res.send('This transformation is retrieved successfully.')
             }
 
     }
@@ -261,19 +238,26 @@ router.post('/acceptTrans',async(req,res)=>{
 }
 })
 
-// router.get('/monthsStatus',(req,res)=>{
-//     if (!userId) return res.status(401).send('Access denied. No userID provided.');
-//     else {
-//         let user=await User.findOne({_id: userId})
-//         if(!user){
-//         return res.status(400).send('No such user with the given ID')
-//     }
-//     else{
-//         let logs=await HrmsLog.find({userID:userId}).select({"month":1,"status":1,"_id":0})
+router.get('/monthsStatus',async (req,res)=>{
+    const userId = req.header('x-userID');
+    if (!userId) return res.status(401).send('Access denied. No userID provided.');
+    else {
+        let user=await User.findOne({_id: userId})
+        if(!user){
+        return res.status(400).send('No such user with the given ID')
+    }
+    else{
+        let logs=await HrmsLog.find({userID:userId}).select({"month":1,"status":1,"_id":0})
+        if(logs.length==0){
+            return res.status(404).send("There is no logs for this user")
+        }
+       else{
+           return res.send(logs)
+       }
 
-//     }
-// }
-// })
+    }
+}
+})
 
 
 module.exports=router
