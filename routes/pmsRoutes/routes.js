@@ -5,7 +5,7 @@ const router = express.Router()
 const {User}= require('../../models/user');
 const {FileDetails,validateFileDetails}=require('../../models/pmsModels/fileDetails')
 const {Variables,validateVariables}=require('../../models/pmsModels/variables')
-const {validateConfiguration,sunConfig,type}=require('../../models/hrmsModels/configuration')
+const {validateConfiguration,sunConfig}=require('../../models/pmsModels/configuration')
 
 router.post('/fileDetails',async(req,res)=>{
     const userId = req.header('x-userID');
@@ -75,12 +75,19 @@ router.post('/variables',async(req,res)=>{
         return 
     }
     else{
-        const variables= new Variables({
-            userID: userId,
-            fieldName: req.body.fieldName,
-            startPosition: req.body.startPosition,
-            length: req.body.length
+        let variablesArr=[]
+        req.body.variables.forEach(element=>{
+            variablesArr.push({
+                fieldName: element.fieldName,
+                startPosition: element.startPosition,
+                length: element.length
+            })
         })
+        let variables= new Variables({
+            userID: userId,
+            variables:variablesArr
+        })
+
         try{
            await variables.save()
            res.send(variables)
@@ -128,7 +135,11 @@ router.get('/variablesDetails',async(req,res)=>{
             return res.status(404).send('This user has not configured the values yet.')
         }
         else{
-            return res.send(_.pick(variables.variables,['fieldName']))
+            let variablesFields=[]
+            variables.variables.forEach((element)=>{
+                variablesFields.push(element.fieldName);
+            })
+            return res.send(variablesFields)
         }
     }
 }
@@ -157,7 +168,6 @@ router.post('/configuration',async(req, res) => {
                 isConst: element.isConst
             })
         })
-        type='pms-configuration'
         conf = new sunConfig({
             userID: userId,
             trans
@@ -179,7 +189,6 @@ router.get('/configuration',async (req,res)=>{
     const userId = req.header('x-userID');
     if (!userId) return res.status(401).send('Access denied. No userID provided.');
     else{
-        type='pms-configuration'
         let configured=await sunConfig.findOne({userID: userId})
         if(!configured){
         return res.status(200).send(false)
@@ -189,6 +198,8 @@ router.get('/configuration',async (req,res)=>{
     }
 }
 })
+
+
 
 module.exports=router
 

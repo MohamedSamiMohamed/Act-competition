@@ -4,7 +4,7 @@ var Connection = require('tedious').Connection;
 var Request = require('tedious').Request;  
 var TYPES = require('tedious').TYPES;  
 const schedule = require('node-schedule');
-const {sunConfig,type}=require('../models/hrmsModels/configuration')
+const {sunConfig, setDatabaseType}=require('../models/hrmsModels/configuration')
 const {connectionModel}= require('../models/hrmsModels/connection');
 const { HrmsLog } = require('../models/hrmsModels/logs');
 
@@ -50,7 +50,7 @@ const job = schedule.scheduleJob('0 0 1 * *', async()=>{
             let userId=element.userID
             delete element['userID']
             let hrmsConn=await databaseConnect(element)
-            type='hrms-configuration'
+            setDatabaseType('hrms-configuration')
             let trans=await sunConfig.find({userID:userId}).select({"trans":1,"_id":0})
             trans=trans[0]['trans']
             const val=await getHrmsData(sunConn,hrmsConn,trans,userId)
@@ -71,7 +71,7 @@ let sunConn=await databaseConnect(sunConnection['sunConnection'])
 let hrmsConnection=await connectionModel.findOne({userID:userId}).select({"_id":0,"__v":0})
     delete hrmsConnection['userID']
     let hrmsConn=await databaseConnect(hrmsConnection)
-    type='hrms-configuration'
+    setDatabaseType('hrms-configuration')
     let trans=await sunConfig.find({userID:userId}).select({"trans":1,"_id":0})
     trans=trans[0]['trans']
     const val=await getHrmsData(sunConn,hrmsConn,trans,userId)

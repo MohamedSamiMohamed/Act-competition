@@ -11,7 +11,7 @@ const app = express();
 const {forceTransform}=require('./transformation/hrms')
 let localDB='mongodb://localhost/Act'
 let clusterDB='mongodb+srv://Mohamed:Abc12345!@cluster0.no0ea.mongodb.net/test'
-mongoose.connect(clusterDB, 
+mongoose.connect(localDB, 
 {useNewUrlParser: true, 
 useUnifiedTopology: true,
 useFindAndModify: false,

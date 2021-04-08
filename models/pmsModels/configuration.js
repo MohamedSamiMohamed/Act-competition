@@ -28,7 +28,7 @@ const confSchema = new mongoose.Schema({
     ]
 });
 
-const Configuration = mongoose.model('hrms-configuration', confSchema);
+const Configuration = mongoose.model('pms-configuration', confSchema);
 
 function validateConf(Configuration){
     const validSchema = Joi.object({
@@ -40,7 +40,6 @@ function validateConf(Configuration){
     });
     return validSchema.validate(Configuration)
 }
-
 
 exports.validateConfiguration = validateConf;
 exports.sunConfig=Configuration

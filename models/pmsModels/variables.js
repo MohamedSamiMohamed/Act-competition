@@ -29,13 +29,13 @@ const variables=mongoose.model('pms-variables',variablesSchema)
 
 function validateVariables(variables){
     const validSchema = Joi.object({
-        trans: Joi.array().items(Joi.object({
+        variables: Joi.array().items(Joi.object({
             fieldName: Joi.string().required(),
             startPosition: Joi.number().required(),
             length: Joi.number().required()
         }))
     });
-    return schema.validate(variables)
+    return validSchema.validate(variables)
 }
 exports.Variables=variables
 exports.validateVariables=validateVariables

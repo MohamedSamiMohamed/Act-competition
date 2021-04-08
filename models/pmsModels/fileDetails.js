@@ -17,22 +17,22 @@ fileName:{
     required:true,
     type: String,
 },
-extention:{
+extension:{
     required:true,
     type:String
    
 }
 })
 
-const fileDetails=mongoose.model('pms-file-details',logSchema)
+const fileDetails=mongoose.model('pms-file-details',fileDetailsSchema)
 
 function validateFileDetails(details){
     const schema=Joi.object({
         path:Joi.string().min(3).required(),
         fileName:Joi.string().min(1).required(),
-        extention:Joi.string().min(2).required(),
+        extension:Joi.string().min(2).required(),
     })
-    return schema.validate(config)
+    return schema.validate(details)
 }
 exports.FileDetails=fileDetails
 exports.validateFileDetails=validateFileDetails
