@@ -1,6 +1,6 @@
 const {validate,connectionModel}= require('../../models/hrmsModels/connection');
 const mongoose = require('mongoose');
-const {validateConfiguration,sunHrmsConfig}=require('../../models/hrmsModels/configuration')
+const {validateConfiguration,sunConfig,type}=require('../../models/hrmsModels/configuration')
 const express = require('express')
 const router = express.Router()
 const {User}= require('../../models/user');
@@ -78,7 +78,8 @@ router.post('/configuration',async(req, res) => {
                 isConst: element.isConst
             })
         })
-        conf = new sunHrmsConfig({
+        type='hrms-configuration'
+        conf = new sunConfig({
             userID: userId,
             trans
         })
@@ -156,7 +157,8 @@ router.get('/configured',async (req,res)=>{
     const userId = req.header('x-userID');
     if (!userId) return res.status(401).send('Access denied. No userID provided.');
     else{
-        let configured=await sunHrmsConfig.findOne({userID: userId})
+        type='hrms-configuration'
+        let configured=await sunConfig.findOne({userID: userId})
         if(!configured){
         return res.status(200).send(false)
     }

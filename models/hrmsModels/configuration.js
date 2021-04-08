@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const mongoose = require('mongoose');
-
+let type;
 const confSchema = new mongoose.Schema({
     userID:{
         required:true,
@@ -27,7 +27,7 @@ const confSchema = new mongoose.Schema({
     ]
 });
 
-const Configuration = mongoose.model('Configuration', confSchema);
+const Configuration = mongoose.model(type, confSchema);
 
 function validateConf(Configuration){
     const validSchema = Joi.object({
@@ -39,6 +39,6 @@ function validateConf(Configuration){
     });
     return validSchema.validate(Configuration)
 }
-
 exports.validateConfiguration = validateConf;
-exports.sunHrmsConfig=Configuration
+exports.sunConfig=Configuration
+exports.type=type

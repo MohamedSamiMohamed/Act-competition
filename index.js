@@ -11,7 +11,7 @@ const app = express();
 const {forceTransform}=require('./transformation/hrms')
 let localDB='mongodb://localhost/Act'
 let clusterDB='mongodb+srv://Mohamed:Abc12345!@cluster0.no0ea.mongodb.net/test'
-mongoose.connect(localDB, 
+mongoose.connect(clusterDB, 
 {useNewUrlParser: true, 
 useUnifiedTopology: true,
 useFindAndModify: false,
@@ -25,6 +25,6 @@ app.use(express.json());
 app.use('/api/hrms',hrmsRouter);
 app.use('/api/users',users)
 app.use('/api/auth',auth)
-
+app.use('/api/pms',pmsRouter)
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on port ${port}...`));

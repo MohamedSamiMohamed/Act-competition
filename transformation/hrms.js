@@ -4,14 +4,37 @@ var Connection = require('tedious').Connection;
 var Request = require('tedious').Request;  
 var TYPES = require('tedious').TYPES;  
 const schedule = require('node-schedule');
-const {sunHrmsConfig}=require('../models/hrmsModels/configuration')
+const {sunConfig,type}=require('../models/hrmsModels/configuration')
 const {connectionModel}= require('../models/hrmsModels/connection');
 const { HrmsLog } = require('../models/hrmsModels/logs');
 
 
 let forceTransFlag=new Boolean (false);
 let forcedMonth;
-
+let mapping={
+    "JV_Report_Details_ID":0,
+    "Property_ID":1,
+    "User_ID":2,
+    "The_Year":3,
+    "The_Month":4,
+    "Account_Number":5,
+    "Account_Number_JV_Description":5,
+    "Jornal_Type":6,
+    "JV_Type":7,
+    "Amount_D":8,
+    "Amount_C":9,
+    "T0":10,
+    "T1":11,
+    "T2":12,
+    "T3":13,
+    "T4":14,
+    "T5":15,
+    "T6":16,
+    "T7":17,
+    "T8":18,
+    "T9":19,
+    "Cost_Center":20
+}
 
 //'0 * 30 3 *'
 //This function initiates transformation process by getting connection of hrms database for each user and his mapping configuration
@@ -27,7 +50,8 @@ const job = schedule.scheduleJob('0 0 1 * *', async()=>{
             let userId=element.userID
             delete element['userID']
             let hrmsConn=await databaseConnect(element)
-            let trans=await sunHrmsConfig.find({userID:userId}).select({"trans":1,"_id":0})
+            type='hrms-configuration'
+            let trans=await sunConfig.find({userID:userId}).select({"trans":1,"_id":0})
             trans=trans[0]['trans']
             const val=await getHrmsData(sunConn,hrmsConn,trans,userId)
         })
@@ -47,7 +71,8 @@ let sunConn=await databaseConnect(sunConnection['sunConnection'])
 let hrmsConnection=await connectionModel.findOne({userID:userId}).select({"_id":0,"__v":0})
     delete hrmsConnection['userID']
     let hrmsConn=await databaseConnect(hrmsConnection)
-    let trans=await sunHrmsConfig.find({userID:userId}).select({"trans":1,"_id":0})
+    type='hrms-configuration'
+    let trans=await sunConfig.find({userID:userId}).select({"trans":1,"_id":0})
     trans=trans[0]['trans']
     const val=await getHrmsData(sunConn,hrmsConn,trans,userId)
 }
@@ -61,14 +86,8 @@ catch(err){
 // This function is responsible of fetching data from HRMS databse
 function getHrmsData(sunConn,hrmsConn,trans,userID){
 try{
-    let requestString='SELECT *'
-    //bugyy
-    // trans.forEach(element=>{
-    //     if(element.isConst==false){
-    //     requestString+=element.mappedVal+','
-    //     }
-    // })
-    // requestString = requestString.substring(0, requestString.length - 1);
+    
+    let requestString='SELECT TOP 1 *'
     if(forceTransFlag==false){
     let d=new Date()
     requestString+=` FROM JV_Report_Details_Tbl WHERE The_Month=${ d.getMonth()} AND User_ID=${1};`
@@ -107,9 +126,7 @@ catch(err){
 
 //This function responsible for insertion into SUN database headers (one row per transformation)
 function insertIntoSunHeaders(sunConn){
-//let requestString="INSERT INTO PK1_PSTG_HDR (UPDATE_COUNT,LAST_CHANGE_USER_ID,LAST_CHANGE_DATETIME) VALUES (0,'sss',20) select @@identity"
-let requestString="INSERT INTO PK1_PSTG_HDR (UPDATE_COUNT,LAST_CHANGE_USER_ID,LAST_CHANGE_DATETIME,CREATED_BY,CREATED_DATETIME,CREATION_TYPE ,DESCR,LAST_STATUS,POST_TYPE,POST_WRITE_TO_HOLD,POST_ROUGH_BOOK,POST_ALLOW_BAL_TRANS,POST_SUSPENSE_ACNT,POST_OTHER_ACNT,POST_BAL_BY,POST_DFLT_PERD,POST_RPT_ERR_ONLY,POST_SUPPRESS_SUB_MSG,POST_RPT_FMT,JRNL_TYPE,POST_RPT_ACNT,CNT_ORIG,CNT_REJECTED,CNT_BAL,CNT_REVERSALS,CNT_POSTED,CNT_SUBSTITUTED,CNT_PRINTED,POST_LDG,POST_ALLOW_OVER_BDGT,POST_ALLOW_SUSPNS_ACNT,CNT_ZERO_VAL_ENTRIES,JNL_NUM,NUM_OF_IMBALANCES,DR_AMT_POSTED,CR_AMT_POSTED,POST_TXN_REF_BAL) VALUES ('0','OFS',GETDATE() ,'OFS',GETDATE(),'LI','HRMS','0','2','1','0','0','999999999','999999999','',0,1,1,'LIALL', 'From (PMS File)' ,'999999999','0','0','0','0','0','0','0','A','0','0','0','0','0','0.000','0.000','0') select @@identity"
-console.log(requestString)
+let requestString="INSERT INTO PK1_PSTG_HDR (UPDATE_COUNT,LAST_CHANGE_USER_ID,LAST_CHANGE_DATETIME,CREATED_BY,CREATED_DATETIME,CREATION_TYPE ,DESCR,LAST_STATUS,POST_TYPE,POST_WRITE_TO_HOLD,POST_ROUGH_BOOK,POST_ALLOW_BAL_TRANS,POST_SUSPENSE_ACNT,POST_OTHER_ACNT,POST_BAL_BY,POST_DFLT_PERD,POST_RPT_ERR_ONLY,POST_SUPPRESS_SUB_MSG,POST_RPT_FMT,JRNL_TYPE,POST_RPT_ACNT,CNT_ORIG,CNT_REJECTED,CNT_BAL,CNT_REVERSALS,CNT_POSTED,CNT_SUBSTITUTED,CNT_PRINTED,POST_LDG,POST_ALLOW_OVER_BDGT,POST_ALLOW_SUSPNS_ACNT,CNT_ZERO_VAL_ENTRIES,JNL_NUM,NUM_OF_IMBALANCES,DR_AMT_POSTED,CR_AMT_POSTED,POST_TXN_REF_BAL) VALUES ('0','OFS',GETDATE() ,'OFS',GETDATE(),'LI','HRMS','0','2','1','0','0','999999999','999999999','1',0,1,1,'LIALL', 'PMS' ,'999999999','0','0','0','0','0','0','0','A','0','0','0','0','0','0.000','0.000','0') select @@identity"
 let headerID;
 return new Promise((resolve,reject)=>{
     request = new Request(requestString, (err,rowCount)=> {  
@@ -117,7 +134,7 @@ return new Promise((resolve,reject)=>{
         console.log(err);
     }
     else{
-        console.log(rowCount+' rows inserted')
+        console.log(rowCount+' rows inserted in headers')
     }
     });
 
@@ -136,22 +153,16 @@ return new Promise((resolve,reject)=>{
 //This function responsible of insertion the rows from HRMS database in the SUN Database
 
 function insertIntoSunDetails(sunConn,trans,rows,headerID,userID,month){
-let requestString="INSERT INTO PK1_PSTG_DETAIL (PSTG_HDR_ID,"
-trans.forEach(element=>{
-    requestString+=`${element.sunColumn},`
-})
-requestString = requestString.substring(0, requestString.length - 1);
-requestString+=')'
+let requestString="INSERT INTO PK1_PSTG_DETAIL "
 let reaminString=" VALUES"
-let i;
+let rowsNum=rows.length
 rows.forEach(row=>{
-    // console.log(row)
-    i=0
-reaminString+=`(${headerID},`
+reaminString+=`('${headerID}','${rowsNum}',`
+rowsNum-=1
 trans.forEach(element=>{
     if(element.isConst===false){
-    reaminString+=`'${row[i].value}',`
-        i+=1
+        let position=mapping[element.mappedVal]
+        reaminString+=`'${row[position].value}',`
     }
     else{
         reaminString+=`'${element.mappedVal}',`
@@ -159,11 +170,12 @@ trans.forEach(element=>{
 })
 reaminString = reaminString.substring(0, reaminString.length - 1);
 reaminString+='),'
+
 })
 reaminString = reaminString.substring(0, reaminString.length - 1);
 reaminString+=';'
 requestString+=reaminString
-
+console.log(requestString);
 
 return new Promise((resolve,reject)=>{
     request = new Request(requestString, (err,rowCount,rows)=> {  
@@ -191,6 +203,8 @@ return new Promise((resolve,reject)=>{
 
 // creat and upload log when the data is transformed from hrms to sun
 async function createLog(userId,month){
+    console.log('here')
+    try{
     let log=new HrmsLog({
         userID:userId,
         timeStamp: Date.now(),
@@ -198,6 +212,10 @@ async function createLog(userId,month){
         month:month
     })
     await log.save()
+}
+catch(err){
+    console.log(err.message)
+}
 }
 
 
@@ -225,6 +243,6 @@ function databaseConnect(config) {
     connection.connect(); 
 })
 }
-exports.forceTransform=forceTransform
 
+exports.forceTransform=forceTransform
 
