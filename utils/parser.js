@@ -11,24 +11,21 @@ async function parserFun(file, pos, len) {
 
         var data = await filehandle.readFile("utf8");
         rows = data.toString().split('\n');
-        let cols = [];
+        let values = [];
+        values.push(rows.length);
         for (let i = 1; i < rows.length; i += 1) {
             for (let j = 0; j < pos.length; j += 1) {
-                cols.push(
+                values.push(
                     rows[i].slice(pos[j], pos[j] + len[j] - 1).trim()
                 );
             }
-            cols.push('end_row');
+            //values.push('end_row');
         }
-        return cols;
+        return values;
     } 
     catch (e) {
         console.log("Error", e);
     }
 }
 
-columns = parserFun('file.SUN', [0, 15, 48, 77, 92], [15, 33, 29, 15, 239]);
-columns.then(function(result){
-    console.log(result);
-});
 module.exports = parserFun;

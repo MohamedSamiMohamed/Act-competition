@@ -9,7 +9,6 @@ class Watcher extends events.EventEmitter {
         this.file_path = file_path;
     }
     //Cycles through directory and process any file found emitting a process event for each one
-
     watch() {
         const watcher = this;
         fs.readdir(this.file_path, function(err, files) {
@@ -28,15 +27,4 @@ class Watcher extends events.EventEmitter {
     }
 }
  
-// let watcher = new Watcher(file_path, processedDir, [0, 15, 48, 77, 92, 331], [15, 33, 29, 15, 239, 1]);
-
-// watcher.on("process", function process(file) {
-//     const watchFile = this.file_path + "/" + file;
-//     const processedFile = this.processedDir + "/" + file.toLowerCase();
-//     fs.rename(watchFile, processedFile, function(err) {
-//     if (err) throw err;
-//     });
-// });
-
-// watcher.start();
 module.exports = Watcher;
