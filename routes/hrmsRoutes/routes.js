@@ -1,3 +1,4 @@
+const {authMiddleWare} =require('../../middleware/auth')
 const {validate,connectionModel}= require('../../models/hrmsModels/connection');
 const mongoose = require('mongoose');
 const {validateConfiguration,sunConfig}=require('../../models/hrmsModels/configuration')
@@ -7,26 +8,17 @@ const {User}= require('../../models/user');
 const {HrmsLog}= require('../../models/hrmsModels/logs');
 const { func } = require('joi');
 const {forceTransform}=require('../../transformation/hrms')
-
-
+router.use(authMiddleWare)
 
 router.post('/configStr',async(req,res)=>{
 const result=validate(req.body)
 if(result.error){
-    res.status(400).send(result.error.details[0].message)
-    return 
+    return res.status(400).send(result.error.details[0].message)
+     
 }
 else{
-const userId = req.header('x-userID');
-if (!userId) return res.status(401).send('Access denied. No userID provided.');
-else{
-    let user=await User.findOne({_id: userId})
-    if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-else{
 const config=new connectionModel({
-    userID: userId,
+    userID: req.user._id,
     server: req.body.server,  
     authentication: {
         type: 'default',
@@ -51,19 +43,9 @@ catch(err){
     res.status(400).send('This user already uploaded connection string before')
 }
 }
-}
-}
 })
 
 router.post('/configuration',async(req, res) => {
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
     const {error} =validateConfiguration(req.body)
     if(error){
         res.status(400).send(error.details[0].message)
@@ -79,7 +61,7 @@ router.post('/configuration',async(req, res) => {
             })
         })
         conf = new sunConfig({
-            userID: userId,
+            userID: req.user._id,
             trans
         })
         try{
@@ -90,8 +72,6 @@ router.post('/configuration',async(req, res) => {
         res.status(400).send('this user already has a configuration before')
     }
     }
-}
-}
 })
 
 router.post('/forceTrans',async(req,res)=>{
@@ -102,23 +82,15 @@ router.post('/forceTrans',async(req,res)=>{
     else{
         return res.status(400).send('request body must contain month')
     }
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
 
-        let hrmsLog=await HrmsLog.findOne({userID:userId,month:month})
+        let hrmsLog=await HrmsLog.findOne({userID:req.user._id,month:month})
             if(!hrmsLog){
                 return res.status(400).send('this month has not transformed yet')
             }
             else{
                 if(hrmsLog.status==='missed'){
                     try{
-                    await forceTransform(month,userId)
+                    await forceTransform(month,req.user._id)
                     res.send('Transformation is done and this month is currently posted, check to hard-post it.')
                     }
                     catch(err){
@@ -132,16 +104,11 @@ router.post('/forceTrans',async(req,res)=>{
             
 
     }
-}
-}
 })
 
 
 router.get('/isClient',async (req,res)=>{
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else{
-        let connection=await connectionModel.findOne({userID: userId})
+        let connection=await connectionModel.findOne({userID: req.user._id})
         if(!connection){
         return res.status(200).send(false)
     }
@@ -149,20 +116,16 @@ router.get('/isClient',async (req,res)=>{
         return res.status(200).send(true)
     }
 }
-})
+)
 
 router.get('/configured',async (req,res)=>{
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else{
-        let configured=await sunConfig.findOne({userID: userId})
+        let configured=await sunConfig.findOne({userID: req.user._id})
         if(!configured){
         return res.status(200).send(false)
     }
     else{
         return res.status(200).send(true)
     }
-}
 })
 
 
@@ -175,15 +138,8 @@ router.post('/retrieve',async(req,res)=>{
         return res.status(400).send('request body must have month property.')
 
     }
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-            let hrmsLog=await HrmsLog.findOne({userID:userId,month:month})
+    
+            let hrmsLog=await HrmsLog.findOne({userID:req.user._id,month:month})
             if(!hrmsLog){
                 return res.status(400).send('this month has not transformed yet')
             }
@@ -197,9 +153,7 @@ router.post('/retrieve',async(req,res)=>{
                 return res.send('This transformation is retrieved successfully.')
             }
 
-    }
-}
-})
+    })
 
 
 router.post('/acceptTrans',async(req,res)=>{
@@ -211,15 +165,8 @@ router.post('/acceptTrans',async(req,res)=>{
         return res.status(400).send('request body must have month property.')
 
     }
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-            let hrmsLog=await HrmsLog.findOne({userID:userId,month:month})
+
+            let hrmsLog=await HrmsLog.findOne({userID:req.user._id,month:month})
             if(!hrmsLog){
                 return res.status(400).send('this month has not transformed yet')
             }
@@ -233,20 +180,10 @@ router.post('/acceptTrans',async(req,res)=>{
                 res.send('This transformation is accepted successfully.')
             }
 
-    }
-}
-})
+    })
 
 router.get('/monthsStatus',async (req,res)=>{
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-        let logs=await HrmsLog.find({userID:userId}).select({"month":1,"status":1,"_id":0})
+        let logs=await HrmsLog.find({userID:req.user._id}).select({"month":1,"status":1,"_id":0})
         if(logs.length==0){
             return res.status(404).send("There is no logs for this user")
         }
@@ -255,8 +192,7 @@ router.get('/monthsStatus',async (req,res)=>{
        }
 
     }
-}
-})
+)
 
 
 module.exports=router

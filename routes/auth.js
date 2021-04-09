@@ -1,3 +1,5 @@
+const config=require('dotenv').config()
+const jwt =require('jsonwebtoken')
 const _=require('lodash')
 const Joi=require('joi')
 const bcrypt=require('bcrypt')
@@ -24,7 +26,9 @@ else{
         return res.status(400).send('Invalid email or password')
      }
      else{
+         const token =jwt.sign({_id:user._id,userName:user.userName},process.env.JWT_PRIVATE_KEY)
          res.send({
+             token:token,
              _id:user._id,
              userName:user.userName,
              companyName:user.companyName

@@ -1,3 +1,4 @@
+const {authMiddleWare} =require('../../middleware/auth')
 const mongoose = require('mongoose');
 const express = require('express')
 const router = express.Router()
@@ -7,16 +8,11 @@ const {Variables,validateVariables}=require('../../models/pmsModels/variables')
 const {validateConfiguration,sunConfig}=require('../../models/pmsModels/configuration')
 const {PmsLog}=require('../../models/pmsModels/logs')
 const Joi = require('joi');
+router.use(authMiddleWare)
+
 
 router.post('/fileDetails',async(req,res)=>{
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
+
     const {error} =validateFileDetails(req.body)
     if(error){
         res.status(400).send(error.details[0].message)
@@ -24,7 +20,7 @@ router.post('/fileDetails',async(req,res)=>{
     }
     else{
         const fileDetails= new FileDetails({
-            userID: userId,
+            userID: req.user._id,
             path: req.body.path,
             fileName: req.body.fileName,
             extension: req.body.extension
@@ -37,20 +33,10 @@ router.post('/fileDetails',async(req,res)=>{
             return res.status(400).send('This user already uploaded file details before')
         }
     }
-}
-}
 })
 
 router.get('/fileDetails',async(req,res)=>{
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-        let fileDetails=await FileDetails.findOne({userID:userId})
+        let fileDetails=await FileDetails.findOne({userID:req.user._id})
         if(!fileDetails){
             return res.send(false)
         }
@@ -58,18 +44,9 @@ router.get('/fileDetails',async(req,res)=>{
             return res.send(true)
         }
     }
-}
-})
+)
 
 router.post('/variables',async(req,res)=>{
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
     const {error} =validateVariables(req.body)
     if(error){
         res.status(400).send(error.details[0].message)
@@ -85,7 +62,7 @@ router.post('/variables',async(req,res)=>{
             })
         })
         let variables= new Variables({
-            userID: userId,
+            userID: req.user._id,
             variables:variablesArr
         })
 
@@ -98,40 +75,21 @@ router.post('/variables',async(req,res)=>{
         }
     }
 }
-}
-})
+)
 
 
 router.get('/variables',async(req,res)=>{
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-        let variables=await Variables.findOne({userID:userId})
+        let variables=await Variables.findOne({userID:req.user._id})
         if(!variables){
             return res.send(false)
         }
         else{
             return res.send(true)
         }
-    }
-}
-})
+    })
 
 router.get('/variablesDetails',async(req,res)=>{
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-        let variables=await Variables.findOne({userID:userId})
+        let variables=await Variables.findOne({userID:req.user._id})
         if(!variables){
             return res.status(404).send('This user has not configured the values yet.')
         }
@@ -143,18 +101,9 @@ router.get('/variablesDetails',async(req,res)=>{
             return res.send(variablesFields)
         }
     }
-}
-})
+)
 
 router.post('/configuration',async(req, res) => {
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
     const {error} =validateConfiguration(req.body)
     if(error){
         res.status(400).send(error.details[0].message)
@@ -170,7 +119,7 @@ router.post('/configuration',async(req, res) => {
             })
         })
         conf = new sunConfig({
-            userID: userId,
+            userID: req.user._id,
             trans
         })
         try{
@@ -182,59 +131,38 @@ router.post('/configuration',async(req, res) => {
     }
     }
 }
-}
-})
+)
 
 
 router.get('/configuration',async (req,res)=>{
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else{
-        let configured=await sunConfig.findOne({userID: userId})
+        let configured=await sunConfig.findOne({userID: req.user._id})
         if(!configured){
         return res.status(200).send(false)
     }
     else{
         return res.status(200).send(true)
     }
-}
 })
 
 router.get('/daysStatus',async (req,res)=>{
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-        let logs=await PmsLog.find({userID:userId}).select({"day":1,"month":1,"status":1,"_id":0})
+
+    let logs=await PmsLog.find({userID:req.user._id,month:req.query.month,year:req.query.year}).select({"day":1,"status":1,"_id":0})
         if(logs.length==0){
-            return res.status(404).send("There is no logs for this user")
+            return res.status(404).send("There is no logs for this user in the given month and year")
         }
        else{
            return res.send(logs)
        }
 
     }
-}
-})
+)
 
 router.post('/acceptTrans',async(req,res)=>{
     const {error}=validateLogReqBody(req.body)
     if(error){
        return res.status(400).send(error.message)
     }
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-            let pmsLog=await PmsLog.findOne({userID:userId,month:req.body.month,day:req.body.day,year:req.body.year})
+            let pmsLog=await PmsLog.findOne({userID:req.user._id,month:req.body.month,day:req.body.day,year:req.body.year})
             if(!pmsLog){
                 return res.status(400).send('This day has not transformed yet')
             }
@@ -249,23 +177,14 @@ router.post('/acceptTrans',async(req,res)=>{
             }
 
     }
-}
-})
+)
 
 router.post('/retrieve',async(req,res)=>{
     const {error}=validateLogReqBody(req.body)
     if(error){
         return res.status(400).send(error.message)
     }
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-        let pmsLog=await PmsLog.findOne({userID:userId,month:req.body.month,day:req.body.day,year:req.body.year})
+        let pmsLog=await PmsLog.findOne({userID:req.user._id,month:req.body.month,day:req.body.day,year:req.body.year})
         if(!pmsLog){
                 return res.status(400).send('this day has not transformed yet')
             }
@@ -280,8 +199,7 @@ router.post('/retrieve',async(req,res)=>{
             }
 
     }
-}
-})
+)
 
 
 router.post('/forceTrans',async(req,res)=>{
@@ -290,16 +208,7 @@ router.post('/forceTrans',async(req,res)=>{
         return res.status(400).send(error.message)
     }
 
-    const userId = req.header('x-userID');
-    if (!userId) return res.status(401).send('Access denied. No userID provided.');
-    else {
-        let user=await User.findOne({_id: userId})
-        if(!user){
-        return res.status(400).send('No such user with the given ID')
-    }
-    else{
-
-        let pmsLog=await PmsLog.findOne({userID:userId,month:req.body.month,day:req.body.day,year:req.body.year})
+        let pmsLog=await PmsLog.findOne({userID:req.user._id,month:req.body.month,day:req.body.day,year:req.body.year})
             if(!pmsLog){
                 return res.status(400).send('this day has not transformed yet')
             }
@@ -321,8 +230,7 @@ router.post('/forceTrans',async(req,res)=>{
 
     }
 }
-}
-})
+)
 
 function validateLogReqBody(req){
     const schema=Joi.object({

@@ -1,3 +1,5 @@
+const config=require('dotenv').config()
+const jwt =require('jsonwebtoken')
 const _=require('lodash')
 const bcrypt=require('bcrypt')
 const {User,validate}= require('../models/user');
@@ -26,7 +28,13 @@ else{
        const salt=await bcrypt.genSalt(10)
        user.password=await bcrypt.hash(user.password,salt)
        await user.save()
-       res.send(_.pick(user,['_id','companyName','userName']))
+       const token =jwt.sign({_id:user._id,userName:user.userName},process.env.JWT_PRIVATE_KEY)
+       res.send({
+        token:token,
+        _id:user._id,
+        userName:user.userName,
+        companyName:user.companyName
+    })
    }
 }
 })

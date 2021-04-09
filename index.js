@@ -1,3 +1,4 @@
+
 const morgan=require('morgan')
 const Joi = require('joi');
 const mongoose = require('mongoose');
@@ -9,9 +10,9 @@ const express = require('express');
 const cors=require('cors')
 const app = express();
 const {forceTransform}=require('./transformation/hrms')
-let localDB='mongodb://localhost/Act'
-let clusterDB='mongodb+srv://Mohamed:Abc12345!@cluster0.no0ea.mongodb.net/test'
-mongoose.connect(localDB, 
+let localDB=process.env.MONGODB_CONNECTION_STRING_LOCAL
+let clusterDB=process.env.MONGODB_CONNECTION_STRING
+mongoose.connect(localDB,
 {useNewUrlParser: true, 
 useUnifiedTopology: true,
 useFindAndModify: false,
@@ -21,6 +22,7 @@ useCreateIndex: true
   .catch(err => console.error('Could not connect to MongoDB...'));
 app.use(cors())
 app.use(morgan('dev'))
+app.use(express.urlencoded({extended:false}));
 app.use(express.json());
 app.use('/api/hrms',hrmsRouter);
 app.use('/api/users',users)
