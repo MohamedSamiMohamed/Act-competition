@@ -1,4 +1,3 @@
-const _=require('lodash')
 const mongoose = require('mongoose');
 const express = require('express')
 const router = express.Router()
@@ -6,6 +5,8 @@ const {User}= require('../../models/user');
 const {FileDetails,validateFileDetails}=require('../../models/pmsModels/fileDetails')
 const {Variables,validateVariables}=require('../../models/pmsModels/variables')
 const {validateConfiguration,sunConfig}=require('../../models/pmsModels/configuration')
+const {PmsLog}=require('../../models/pmsModels/logs')
+const Joi = require('joi');
 
 router.post('/fileDetails',async(req,res)=>{
     const userId = req.header('x-userID');
@@ -199,7 +200,137 @@ router.get('/configuration',async (req,res)=>{
 }
 })
 
+router.get('/daysStatus',async (req,res)=>{
+    const userId = req.header('x-userID');
+    if (!userId) return res.status(401).send('Access denied. No userID provided.');
+    else {
+        let user=await User.findOne({_id: userId})
+        if(!user){
+        return res.status(400).send('No such user with the given ID')
+    }
+    else{
+        let logs=await PmsLog.find({userID:userId}).select({"day":1,"status":1,"_id":0})
+        if(logs.length==0){
+            return res.status(404).send("There is no logs for this user")
+        }
+       else{
+           return res.send(logs)
+       }
+
+    }
+}
+})
+
+router.post('/acceptTrans',async(req,res)=>{
+    const {error}=validateLogReqBody(req.body)
+    if(error){
+       return res.status(400).send(error.message)
+    }
+    const userId = req.header('x-userID');
+    if (!userId) return res.status(401).send('Access denied. No userID provided.');
+    else {
+        let user=await User.findOne({_id: userId})
+        if(!user){
+        return res.status(400).send('No such user with the given ID')
+    }
+    else{
+            let pmsLog=await PmsLog.findOne({userID:userId,month:req.body.month,day:req.body.day,year:req.body.year})
+            if(!pmsLog){
+                return res.status(400).send('This day has not transformed yet')
+            }
+            else{
+                if(pmsLog.status!='posted'){
+                    return res.status(400).send('This day is must be posted first before hard-posting it.')   
+                }
+                pmsLog.status='hard-posted',
+                pmsLog.timeStamp= Date.now()
+                await pmsLog.save()
+                res.send('This transformation is accepted successfully.')
+            }
+
+    }
+}
+})
+
+router.post('/retrieve',async(req,res)=>{
+    const {error}=validateLogReqBody(req.body)
+    if(error){
+        return res.status(400).send(error.message)
+    }
+    const userId = req.header('x-userID');
+    if (!userId) return res.status(401).send('Access denied. No userID provided.');
+    else {
+        let user=await User.findOne({_id: userId})
+        if(!user){
+        return res.status(400).send('No such user with the given ID')
+    }
+    else{
+        let pmsLog=await PmsLog.findOne({userID:userId,month:req.body.month,day:req.body.day,year:req.body.year})
+        if(!pmsLog){
+                return res.status(400).send('this day has not transformed yet')
+            }
+            else{
+                if(pmsLog.status==='hard-posted'){
+                    return res.status(400).send('this day is hard-posted, sorry you can not retrive it')   
+                }
+                pmsLog.status='missed',
+                pmsLog.timeStamp= Date.now()
+                await pmsLog.save()
+                return res.send('This transformation is retrieved successfully.')
+            }
+
+    }
+}
+})
 
 
+router.post('/forceTrans',async(req,res)=>{
+    const {error}= validateLogReqBody(req.body)
+    if(error){
+        return res.status(400).send(error.message)
+    }
+
+    const userId = req.header('x-userID');
+    if (!userId) return res.status(401).send('Access denied. No userID provided.');
+    else {
+        let user=await User.findOne({_id: userId})
+        if(!user){
+        return res.status(400).send('No such user with the given ID')
+    }
+    else{
+
+        let pmsLog=await PmsLog.findOne({userID:userId,month:req.body.month,day:req.body.day,year:req.body.year})
+            if(!pmsLog){
+                return res.status(400).send('this day has not transformed yet')
+            }
+            else{
+                if(pmsLog.status==='missed'){
+                    try{
+                    // await forceTransform(month,userId) //TODO impelement this procedure in transformation/pms.js
+                    res.send('Transformation is done and this month is currently posted, check to hard-post it.')
+                    }
+                    catch(err){
+                        res.status(400).send(`something went wrong, ${err.message}`)
+                    }
+                    
+                }
+                else{
+                    res.status(400).send('This day is not missed to be transformed by forcing')
+                }
+            
+
+    }
+}
+}
+})
+
+function validateLogReqBody(req){
+    const schema=Joi.object({
+        day:Joi.number().integer().min(0).max(6).required(),
+        month:Joi.number().integer().min(1).max(12).required(),
+        year:Joi.number().integer().required(),
+    })
+    return schema.validate(req)
+}
 module.exports=router
 
