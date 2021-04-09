@@ -32,7 +32,7 @@ const Configuration = mongoose.model('pms-configuration', confSchema);
 
 function validateConf(Configuration){
     const validSchema = Joi.object({
-        trans: Joi.array().min(145).items(Joi.object({
+        trans: Joi.array().min(144).items(Joi.object({
             sunColumn: Joi.string().uppercase().trim().required(),
             mappedVal: Joi.required(),
             isConst: Joi.boolean().required()

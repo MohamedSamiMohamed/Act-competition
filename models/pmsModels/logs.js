@@ -21,7 +21,7 @@ timeStamp:{
 },
 day:{
     required:true,
-    type:Number //[Saturday:0,Sunday:1,Monday:2...Friday:6]
+    type:Number
 },
 month:{
     required:true,

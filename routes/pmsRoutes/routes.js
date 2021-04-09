@@ -209,7 +209,7 @@ router.get('/daysStatus',async (req,res)=>{
         return res.status(400).send('No such user with the given ID')
     }
     else{
-        let logs=await PmsLog.find({userID:userId}).select({"day":1,"status":1,"_id":0})
+        let logs=await PmsLog.find({userID:userId}).select({"day":1,"month":1,"status":1,"_id":0})
         if(logs.length==0){
             return res.status(404).send("There is no logs for this user")
         }
@@ -326,7 +326,7 @@ router.post('/forceTrans',async(req,res)=>{
 
 function validateLogReqBody(req){
     const schema=Joi.object({
-        day:Joi.number().integer().min(0).max(6).required(),
+        day:Joi.number().integer().min(1).max(31).required(),
         month:Joi.number().integer().min(1).max(12).required(),
         year:Joi.number().integer().required(),
     })
