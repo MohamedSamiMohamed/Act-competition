@@ -116,6 +116,26 @@ else{
 }
 }))
 
+router.get('/userStatus',asyncMiddleWare(async(req,res)=>{
+    let userStatus={};
+    let connectionString=await connectionModel.findOne({userID:req.user._id})
+    if(!connectionString){
+        userStatus.connectionString=false
+    }
+    else{
+        userStatus.connectionString=true
+    }
+    let configuration=await sunConfig.findOne({userID: req.user._id})
+    if(!configuration){
+        userStatus.configuration=false
+    }
+    else{
+        userStatus.configuration=true
+    }
+    return res.send(userStatus);
+
+}))
+
 router.post('/forceTrans',asyncMiddleWare(async(req,res)=>{
     let month;
     if(req.body['month']){

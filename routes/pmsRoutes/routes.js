@@ -60,6 +60,7 @@ router.delete('/fileDetails',asyncMiddleWare(async(req,res)=>{
 }
 ))
 
+
 router.post('/variables',async(req,res)=>{
     const {error} =validateVariables(req.body)
     if(error){
@@ -181,6 +182,33 @@ router.delete('/configuration',asyncMiddleWare(async(req,res)=>{
 }
 ))
 
+router.get('/userStatus',asyncMiddleWare(async(req,res)=>{
+    let userStatus={};
+    let fileDetails=await FileDetails.findOne({userID:req.user._id})
+    if(!fileDetails){
+        userStatus.fileDetails=false
+    }
+    else{
+        userStatus.fileDetails=true
+    }
+    let configuration=await sunConfig.findOne({userID: req.user._id})
+    if(!configuration){
+        userStatus.configuration=false
+    }
+    else{
+        userStatus.configuration=true
+    }
+    let variables=await Variables.findOne({userID:req.user._id})
+    if(!variables){
+        userStatus.variables=false
+    }
+    else{
+        userStatus.variables=true
+    }
+    return res.send(userStatus);
+
+}))
+
 router.get('/daysStatus',asyncMiddleWare(async (req,res)=>{
 
     let logs=await PmsLog.find({userID:req.user._id,month:req.query.month,year:req.query.year}).select({"day":1,"status":1,"_id":0})
@@ -228,6 +256,9 @@ router.post('/retrieve',asyncMiddleWare(async(req,res)=>{
             else{
                 if(pmsLog.status==='hard-posted'){
                     return res.status(400).send('this day is hard-posted, sorry you can not retrive it')   
+                }
+                if(pmsLog.status==='retrieved'){
+                    return res.status(400).send('this day is already retrieved, sorry you can not retrive it')   
                 }
                 pmsLog.status='missed',
                 pmsLog.timeStamp= Date.now()
