@@ -312,8 +312,7 @@ function validateForceReqBody(req){
         year:Joi.number().integer().required(),
         path:Joi.string().min(3).required(),
         fileName:Joi.string().min(1).required(),
-        extension:Joi.string().min(2).required(),
-        skippedLines:Joi.number().integer().required()
+        extension:Joi.string().min(2).required()
     })
     return schema.validate(req)
 }
