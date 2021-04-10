@@ -12,6 +12,7 @@ const cors=require('cors')
 const app = express();
 const {forceTransform}=require('./transformation/hrms')
 const {forceTransformPMS}=require('./transformation/pms')
+const {createLog}=require('./transformation/pms')
 let localDB=process.env.MONGODB_CONNECTION_STRING_LOCAL
 let clusterDB=process.env.MONGODB_CONNECTION_STRING
 mongoose.connect(clusterDB,
@@ -46,3 +47,4 @@ const port = process.env.PORT || 3000;
 
 app.listen(port, () => console.log(`Listening on port ${port}...`));
 
+//createLog("6071aec622130a30c42f2d61",4,4,2021)

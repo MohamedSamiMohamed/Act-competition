@@ -4,7 +4,7 @@ var Connection = require('tedious').Connection;
 var Request = require('tedious').Request;
 var TYPES = require('tedious').TYPES;
 const schedule = require('node-schedule');
-const PMSLog= require('../models/pmsModels/logs');
+const {PmsLog}= require('../models/pmsModels/logs');
 const {sunConfig}=require('../models/pmsModels/configuration');
 const { Variables } = require('../models/pmsModels/variables');
 const { fileDetails } = require('../models/pmsModels/fileDetails');
@@ -200,7 +200,7 @@ function deleteFile(file_path, file_name) {
 
 // create and upload log when the data is transformed 
 async function createLog(userId, month, day,year,) {
-    let log = new PMSLog({
+    let log = new PmsLog({
         userID: userId,
         status: 'posted',
         month: month,
@@ -213,7 +213,7 @@ async function createLog(userId, month, day,year,) {
 
 // update log when the status was retrieved then transform happens 
 async function updateLog(userId, month, day,year) {
-    let PMSLog = await PMSLog.findOne({
+    let PMSLog = await PmsLog.findOne({
         userID: userId,
         month: month,
         year: year,
@@ -221,7 +221,7 @@ async function updateLog(userId, month, day,year) {
     })
     PMSLog.status = 'posted'
     PMSLog.timeStamp = Date.now()
-    await PMSLog.save()
+    await PmsLog.save()
 }
 
 // this function create connection to SQL server
@@ -240,3 +240,4 @@ function databaseConnect(config) {
     })
 }
 exports.forceTransformPMS = forceTransform
+exports.createLog=createLog
