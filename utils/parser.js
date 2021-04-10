@@ -1,7 +1,7 @@
 const fs = require('fs');
 const fsPromises = fs.promises;
 
-async function parserFun(file, pos, len) {
+async function parserFun(file, pos, len, skipped) {
     //file: file to be parsed
     //pos: array of positions for parsing
     //len: array of lengths for parsing
@@ -12,12 +12,16 @@ async function parserFun(file, pos, len) {
         var data = await filehandle.readFile("utf8");
         rows = data.toString().split('\n');
         let values = [];
-        values.push(rows.length);
-        for (let i = 1; i < rows.length; i += 1) {
+        let dummy = [];
+        values.push([rows.length]);
+        for (let i = skipped; i < rows.length; i += 1) {
             for (let j = 0; j < pos.length; j += 1) {
-                values.push([i, rows[i].slice(pos[j], pos[j] + len[j] - 1).trim()]
+                dummy.push(
+                    rows[i].slice(pos[j], pos[j] + len[j]).trim()
                 ); 
             }
+            values.push(dummy);
+            dummy=[];
         }
         return values;
     } 

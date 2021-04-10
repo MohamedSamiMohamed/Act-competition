@@ -163,6 +163,7 @@ let requestString="INSERT INTO PK1_PSTG_DETAIL "
 let reaminString=" VALUES"
 let rowsNum=rows.length
 rows.forEach(row=>{
+    console.log(row);
 reaminString+=`('${headerID}','${rowsNum}',`
 rowsNum-=1
 trans.forEach(element=>{

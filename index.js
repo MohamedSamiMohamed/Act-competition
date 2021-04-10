@@ -10,9 +10,10 @@ const express = require('express');
 const cors=require('cors')
 const app = express();
 const {forceTransform}=require('./transformation/hrms')
+const {forceTransformPMS}=require('./transformation/pms')
 let localDB=process.env.MONGODB_CONNECTION_STRING_LOCAL
 let clusterDB=process.env.MONGODB_CONNECTION_STRING
-mongoose.connect(localDB,
+mongoose.connect(clusterDB,
 {useNewUrlParser: true, 
 useUnifiedTopology: true,
 useFindAndModify: false,
@@ -30,3 +31,5 @@ app.use('/api/auth',auth)
 app.use('/api/pms',pmsRouter)
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on port ${port}...`));
+
+forceTransformPMS(1, 4, "6071f458740cd81fa4b453d2", "C:/Users/Administrator/Desktop", "RV0301 (003)", ".SUN", 2)
