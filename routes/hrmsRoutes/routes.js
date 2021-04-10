@@ -1,3 +1,4 @@
+const asyncMiddleWare=require('../../middleware/asyncMiddleware')
 const {authMiddleWare} =require('../../middleware/auth')
 const {validate,connectionModel}= require('../../models/hrmsModels/connection');
 const mongoose = require('mongoose');
@@ -7,14 +8,18 @@ const router = express.Router()
 const {User}= require('../../models/user');
 const {HrmsLog}= require('../../models/hrmsModels/logs');
 const { func } = require('joi');
-const {forceTransform}=require('../../transformation/hrms')
+const {forceTransform}=require('../../transformation/hrms');
 router.use(authMiddleWare)
 
-router.post('/configStr',async(req,res)=>{
+router.post('/connection',asyncMiddleWare(async(req,res)=>{
 const result=validate(req.body)
 if(result.error){
     return res.status(400).send(result.error.details[0].message)
      
+}
+let config=await connectionModel.findOne({userID: req.user._id})
+if(config){
+    return res.status(400).send('This user already uploaded connection string before')
 }
 else{
 const config=new connectionModel({
@@ -35,22 +40,43 @@ const config=new connectionModel({
         rowCollectionOnRequestCompletion: true
     }
 })
-try{
-await config.save()
+const result=await config.save()
 res.send(config)
 }
-catch(err){
-    res.status(400).send('This user already uploaded connection string before')
-}
-}
-})
+}))
 
-router.post('/configuration',async(req, res) => {
+
+router.get('/connection',asyncMiddleWare(async (req,res)=>{
+    let connection=await connectionModel.findOne({userID: req.user._id})
+    if(!connection){
+    return res.status(200).send(false)
+}
+else{
+    return res.status(200).send(true)
+}
+}))
+
+
+router.delete('/connection',asyncMiddleWare(async(req,res)=>{
+    const connection= await connectionModel.findOneAndDelete({userID:req.user._id})
+    if(!connection){
+        return res.status(404).send('This user does not have connection string, try to upload a connection string')
+    }
+    else{
+        return res.send(`This connection string has been deleted successfully ${connection}`)
+    }    
+}))
+
+router.post('/configuration',asyncMiddleWare(async(req, res) => {
     const {error} =validateConfiguration(req.body)
     if(error){
         res.status(400).send(error.details[0].message)
         return 
     }
+    let config=await sunConfig.findOne({userID: req.user._id})
+if(config){
+    return res.status(400).send('This user already uploaded connection string before')
+}
     else{
         let trans=[]
         req.body.trans.forEach(element=>{
@@ -64,17 +90,53 @@ router.post('/configuration',async(req, res) => {
             userID: req.user._id,
             trans
         })
-        try{
         await conf.save();
         res.send('Configuration Settings Uploaded Successfully!');
     }
-    catch(err){
-        res.status(400).send('this user already has a configuration before')
-    }
-    }
-})
+}))
 
-router.post('/forceTrans',async(req,res)=>{
+router.get('/configuration',asyncMiddleWare(async (req,res)=>{
+    let configured=await sunConfig.findOne({userID: req.user._id})
+    if(!configured){
+    return res.status(200).send(false)
+}
+else{
+    return res.status(200).send(true)
+}
+}))
+
+
+router.delete('/configuration',asyncMiddleWare(async (req,res)=>{
+    let configuration=await sunConfig.findOneAndDelete({userID: req.user._id})
+    if(!configuration){
+    return res.status(404).send('This user does not have configuration, try to upload a configuration mapping')
+}
+else{
+    return res.send(`This user's configuration has been deleted successfully`)
+}
+}))
+
+router.get('/userStatus',asyncMiddleWare(async(req,res)=>{
+    let userStatus={};
+    let connectionString=await connectionModel.findOne({userID:req.user._id})
+    if(!connectionString){
+        userStatus.connectionString=false
+    }
+    else{
+        userStatus.connectionString=true
+    }
+    let configuration=await sunConfig.findOne({userID: req.user._id})
+    if(!configuration){
+        userStatus.configuration=false
+    }
+    else{
+        userStatus.configuration=true
+    }
+    return res.send(userStatus);
+
+}))
+
+router.post('/forceTrans',asyncMiddleWare(async(req,res)=>{
     let month;
     if(req.body['month']){
         month=req.body['month']
@@ -89,13 +151,8 @@ router.post('/forceTrans',async(req,res)=>{
             }
             else{
                 if(hrmsLog.status==='missed'){
-                    try{
                     await forceTransform(month,req.user._id)
                     res.send('Transformation is done and this month is currently posted, check to hard-post it.')
-                    }
-                    catch(err){
-                        res.status(400).send(`something went wrong, ${err.message}`)
-                    }
                     
                 }
                 else{
@@ -104,32 +161,11 @@ router.post('/forceTrans',async(req,res)=>{
             
 
     }
-})
+}))
 
 
-router.get('/isClient',async (req,res)=>{
-        let connection=await connectionModel.findOne({userID: req.user._id})
-        if(!connection){
-        return res.status(200).send(false)
-    }
-    else{
-        return res.status(200).send(true)
-    }
-}
-)
 
-router.get('/configured',async (req,res)=>{
-        let configured=await sunConfig.findOne({userID: req.user._id})
-        if(!configured){
-        return res.status(200).send(false)
-    }
-    else{
-        return res.status(200).send(true)
-    }
-})
-
-
-router.post('/retrieve',async(req,res)=>{
+router.post('/retrieve',asyncMiddleWare(async(req,res)=>{
     let month;
     if(req.body['month']){
         month=req.body.month
@@ -153,10 +189,10 @@ router.post('/retrieve',async(req,res)=>{
                 return res.send('This transformation is retrieved successfully.')
             }
 
-    })
+    }))
 
 
-router.post('/acceptTrans',async(req,res)=>{
+router.post('/acceptTrans',asyncMiddleWare(async(req,res)=>{
     let month;
     if(req.body['month']){
         month=req.body.month
@@ -180,9 +216,9 @@ router.post('/acceptTrans',async(req,res)=>{
                 res.send('This transformation is accepted successfully.')
             }
 
-    })
+    }))
 
-router.get('/monthsStatus',async (req,res)=>{
+router.get('/monthsStatus',asyncMiddleWare(async (req,res)=>{
         let logs=await HrmsLog.find({userID:req.user._id}).select({"month":1,"status":1,"_id":0})
         if(logs.length==0){
             return res.status(404).send("There is no logs for this user")
@@ -191,8 +227,7 @@ router.get('/monthsStatus',async (req,res)=>{
            return res.send(logs)
        }
 
-    }
-)
+    }))
 
 
 module.exports=router

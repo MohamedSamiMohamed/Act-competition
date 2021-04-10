@@ -1,3 +1,4 @@
+const asyncMiddleWare=require('../middleware/asyncMiddleware')
 const config=require('dotenv').config()
 const jwt =require('jsonwebtoken')
 const _=require('lodash')
@@ -8,7 +9,7 @@ const express = require('express');
 const router = express.Router()
 
 
-router.post('/',async (req,res)=>{
+router.post('/',asyncMiddleWare(async (req,res)=>{
 const {error} =validate(req.body)
 if(error){
     res.status(400).send(error.details[0].message)
@@ -37,6 +38,6 @@ else{
     })
    }
 }
-})
+}))
 
 module.exports=router

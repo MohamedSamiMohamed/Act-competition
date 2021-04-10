@@ -1,3 +1,4 @@
+const asyncMiddleWare=require('../../middleware/asyncMiddleware')
 const {authMiddleWare} =require('../../middleware/auth')
 const mongoose = require('mongoose');
 const express = require('express')
@@ -11,12 +12,17 @@ const Joi = require('joi');
 router.use(authMiddleWare)
 
 
-router.post('/fileDetails',async(req,res)=>{
+router.post('/fileDetails',asyncMiddleWare(async(req,res)=>{
 
     const {error} =validateFileDetails(req.body)
     if(error){
         res.status(400).send(error.details[0].message)
         return 
+    }
+    let fileDetails= await FileDetails.findOne({userID:req.user._id})
+    if(fileDetails){
+        return res.status(400).send('This user already uploaded file details before')
+
     }
     else{
         const fileDetails= new FileDetails({
@@ -25,17 +31,14 @@ router.post('/fileDetails',async(req,res)=>{
             fileName: req.body.fileName,
             extension: req.body.extension
         })
-        try{
            await fileDetails.save()
            res.send(fileDetails)
-        }
-        catch(err){
-            return res.status(400).send('This user already uploaded file details before')
-        }
-    }
-})
 
-router.get('/fileDetails',async(req,res)=>{
+
+    }
+}))
+
+router.get('/fileDetails',asyncMiddleWare(async(req,res)=>{
         let fileDetails=await FileDetails.findOne({userID:req.user._id})
         if(!fileDetails){
             return res.send(false)
@@ -44,13 +47,30 @@ router.get('/fileDetails',async(req,res)=>{
             return res.send(true)
         }
     }
-)
+))
+
+router.delete('/fileDetails',asyncMiddleWare(async(req,res)=>{
+    let fileDetails=await FileDetails.findOneAndDelete({userID:req.user._id})
+    if(!fileDetails){
+        return res.status(404).send("This user hasn't uploaded file details yet")
+    }
+    else{
+        return res.send("User's file details has been deleted successfully")
+    }
+}
+))
+
 
 router.post('/variables',async(req,res)=>{
     const {error} =validateVariables(req.body)
     if(error){
         res.status(400).send(error.details[0].message)
         return 
+    }
+    let variables=await Variables.findOne({userID:req.user._id})
+    if(variables){
+     return res.status(400).send('This user already uploaded file details before')
+  
     }
     else{
         let variablesArr=[]
@@ -62,23 +82,18 @@ router.post('/variables',async(req,res)=>{
             })
         })
         let variables= new Variables({
+            skippedLines:req.body.skippedLines,
             userID: req.user._id,
             variables:variablesArr
         })
-
-        try{
            await variables.save()
            res.send(variables)
-        }
-        catch(err){
-            return res.status(400).send('This user already uploaded file details before')
-        }
     }
 }
 )
 
 
-router.get('/variables',async(req,res)=>{
+router.get('/variables',asyncMiddleWare(async(req,res)=>{
         let variables=await Variables.findOne({userID:req.user._id})
         if(!variables){
             return res.send(false)
@@ -86,9 +101,21 @@ router.get('/variables',async(req,res)=>{
         else{
             return res.send(true)
         }
-    })
+    }))
 
-router.get('/variablesDetails',async(req,res)=>{
+router.delete('/variables',asyncMiddleWare(async(req,res)=>{
+    let variables=await Variables.findOneAndDelete({userID:req.user._id})
+    if(!variables){
+        return res.status(404).send("This user hasn't uploaded variables yet")
+    }
+    else{
+        return res.send("User's variables has been deleted successfully")
+    }
+}
+))
+    
+
+router.get('/variablesDetails',asyncMiddleWare(async(req,res)=>{
         let variables=await Variables.findOne({userID:req.user._id})
         if(!variables){
             return res.status(404).send('This user has not configured the values yet.')
@@ -101,13 +128,18 @@ router.get('/variablesDetails',async(req,res)=>{
             return res.send(variablesFields)
         }
     }
-)
+))
 
-router.post('/configuration',async(req, res) => {
+router.post('/configuration',asyncMiddleWare(async(req, res) => {
     const {error} =validateConfiguration(req.body)
     if(error){
         res.status(400).send(error.details[0].message)
         return 
+    }
+    let config=await sunConfig.findOne({userID:req.user._id})
+    if(config){
+        return res.status(400).send('this user already has a configuration before')
+
     }
     else{
         let trans=[]
@@ -122,19 +154,14 @@ router.post('/configuration',async(req, res) => {
             userID: req.user._id,
             trans
         })
-        try{
         await conf.save();
         return res.send('Configuration Settings Uploaded Successfully!');
     }
-    catch(err){
-        return res.status(400).send('this user already has a configuration before')
-    }
-    }
 }
-)
+))
 
 
-router.get('/configuration',async (req,res)=>{
+router.get('/configuration',asyncMiddleWare(async (req,res)=>{
         let configured=await sunConfig.findOne({userID: req.user._id})
         if(!configured){
         return res.status(200).send(false)
@@ -142,9 +169,47 @@ router.get('/configuration',async (req,res)=>{
     else{
         return res.status(200).send(true)
     }
-})
+}))
 
-router.get('/daysStatus',async (req,res)=>{
+router.delete('/configuration',asyncMiddleWare(async(req,res)=>{
+    let config=await sunConfig.findOneAndDelete({userID:req.user._id})
+    if(!config){
+        return res.status(404).send("This user hasn't uploaded configuration yet")
+    }
+    else{
+        return res.send("User's configuration has been deleted successfully")
+    }
+}
+))
+
+router.get('/userStatus',asyncMiddleWare(async(req,res)=>{
+    let userStatus={};
+    let fileDetails=await FileDetails.findOne({userID:req.user._id})
+    if(!fileDetails){
+        userStatus.fileDetails=false
+    }
+    else{
+        userStatus.fileDetails=true
+    }
+    let configuration=await sunConfig.findOne({userID: req.user._id})
+    if(!configuration){
+        userStatus.configuration=false
+    }
+    else{
+        userStatus.configuration=true
+    }
+    let variables=await Variables.findOne({userID:req.user._id})
+    if(!variables){
+        userStatus.variables=false
+    }
+    else{
+        userStatus.variables=true
+    }
+    return res.send(userStatus);
+
+}))
+
+router.get('/daysStatus',asyncMiddleWare(async (req,res)=>{
 
     let logs=await PmsLog.find({userID:req.user._id,month:req.query.month,year:req.query.year}).select({"day":1,"status":1,"_id":0})
         if(logs.length==0){
@@ -155,9 +220,9 @@ router.get('/daysStatus',async (req,res)=>{
        }
 
     }
-)
+))
 
-router.post('/acceptTrans',async(req,res)=>{
+router.post('/acceptTrans',asyncMiddleWare(async(req,res)=>{
     const {error}=validateLogReqBody(req.body)
     if(error){
        return res.status(400).send(error.message)
@@ -177,9 +242,9 @@ router.post('/acceptTrans',async(req,res)=>{
             }
 
     }
-)
+))
 
-router.post('/retrieve',async(req,res)=>{
+router.post('/retrieve',asyncMiddleWare(async(req,res)=>{
     const {error}=validateLogReqBody(req.body)
     if(error){
         return res.status(400).send(error.message)
@@ -192,6 +257,9 @@ router.post('/retrieve',async(req,res)=>{
                 if(pmsLog.status==='hard-posted'){
                     return res.status(400).send('this day is hard-posted, sorry you can not retrive it')   
                 }
+                if(pmsLog.status==='retrieved'){
+                    return res.status(400).send('this day is already retrieved, sorry you can not retrive it')   
+                }
                 pmsLog.status='missed',
                 pmsLog.timeStamp= Date.now()
                 await pmsLog.save()
@@ -199,10 +267,10 @@ router.post('/retrieve',async(req,res)=>{
             }
 
     }
-)
+))
 
 
-router.post('/forceTrans',async(req,res)=>{
+router.post('/forceTrans',asyncMiddleWare(async(req,res)=>{
     const {error}= validateLogReqBody(req.body)
     if(error){
         return res.status(400).send(error.message)
@@ -214,13 +282,8 @@ router.post('/forceTrans',async(req,res)=>{
             }
             else{
                 if(pmsLog.status==='missed'){
-                    try{
                     // await forceTransform(month,userId) //TODO impelement this procedure in transformation/pms.js
                     res.send('Transformation is done and this month is currently posted, check to hard-post it.')
-                    }
-                    catch(err){
-                        res.status(400).send(`something went wrong, ${err.message}`)
-                    }
                     
                 }
                 else{
@@ -230,7 +293,7 @@ router.post('/forceTrans',async(req,res)=>{
 
     }
 }
-)
+))
 
 function validateLogReqBody(req){
     const schema=Joi.object({

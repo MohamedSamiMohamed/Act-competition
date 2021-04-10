@@ -7,6 +7,7 @@ const hrmsRouter= require('./routes/hrmsRoutes/routes');
 const users=require('./routes/users')
 const auth=require('./routes/auth')
 const express = require('express');
+const error=require('./middleware/error')
 const cors=require('cors')
 const app = express();
 const {forceTransform}=require('./transformation/hrms')
@@ -29,7 +30,19 @@ app.use('/api/hrms',hrmsRouter);
 app.use('/api/users',users)
 app.use('/api/auth',auth)
 app.use('/api/pms',pmsRouter)
+app.use(error)
+
+process.on('uncaughtException',(ex)=>{
+  console.log('WE GOT UNCAUGHT EXCEPTION: '+ex)
+  process.exit(1)
+})
+
+process.on('unhandledRejection',(ex)=>{
+  console.log('WE GOT UNHANDELED REJECTION: '+ex.message)
+  process.exit(1)
+})
+
 const port = process.env.PORT || 3000;
+
 app.listen(port, () => console.log(`Listening on port ${port}...`));
 
-forceTransformPMS(1, 4, "6071f458740cd81fa4b453d2", "C:/Users/Administrator/Desktop", "RV0301 (003)", ".SUN", 2)

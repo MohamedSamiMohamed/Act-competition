@@ -8,6 +8,10 @@ userID:{
     type:mongoose.Schema.Types.ObjectId,
     ref:'users'
 },
+skippedLines:{
+    required:true,
+    type:Number,
+},
 variables:[{
     fieldName: {
         required:true,
@@ -29,6 +33,7 @@ const variables=mongoose.model('pms-variables',variablesSchema)
 
 function validateVariables(variables){
     const validSchema = Joi.object({
+        skippedLines:Joi.number().required(),
         variables: Joi.array().items(Joi.object({
             fieldName: Joi.string().required(),
             startPosition: Joi.number().required(),
