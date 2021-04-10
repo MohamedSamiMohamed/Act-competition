@@ -1,5 +1,6 @@
 const asyncMiddleWare=require('../../middleware/asyncMiddleware')
 const {authMiddleWare} =require('../../middleware/auth')
+const {forceTransformPMS}=require('../../transformation/pms');
 const mongoose = require('mongoose');
 const express = require('express')
 const router = express.Router()
@@ -271,7 +272,7 @@ router.post('/retrieve',asyncMiddleWare(async(req,res)=>{
 
 
 router.post('/forceTrans',asyncMiddleWare(async(req,res)=>{
-    const {error}= validateLogReqBody(req.body)
+    const {error}= validateForceReqBody(req.body)
     if(error){
         return res.status(400).send(error.message)
     }
@@ -282,7 +283,7 @@ router.post('/forceTrans',asyncMiddleWare(async(req,res)=>{
             }
             else{
                 if(pmsLog.status==='missed'){
-                    // await forceTransform(month,userId) //TODO impelement this procedure in transformation/pms.js
+                    await forceTransformPMS(req.body.day,req.body.month,req.user._id,req.body.path,req.body.fileName,req.body.extension,req.body.skippedLines) 
                     res.send('Transformation is done and this month is currently posted, check to hard-post it.')
                     
                 }
@@ -300,6 +301,19 @@ function validateLogReqBody(req){
         day:Joi.number().integer().min(1).max(31).required(),
         month:Joi.number().integer().min(1).max(12).required(),
         year:Joi.number().integer().required(),
+    })
+    return schema.validate(req)
+}
+
+function validateForceReqBody(req){
+    const schema=Joi.object({
+        day:Joi.number().integer().min(1).max(31).required(),
+        month:Joi.number().integer().min(1).max(12).required(),
+        year:Joi.number().integer().required(),
+        path:Joi.string().min(3).required(),
+        fileName:Joi.string().min(1).required(),
+        extension:Joi.string().min(2).required(),
+        skippedLines:Joi.number().integer().required()
     })
     return schema.validate(req)
 }
