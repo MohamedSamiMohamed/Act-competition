@@ -1,4 +1,7 @@
 
+const startupDebugger=require('debug')('app:startup')
+const dbDebugger=require('debug')('app:db')
+const sqlDebugger=require('debug')('app:sql')
 const morgan=require('morgan')
 const Joi = require('joi');
 const mongoose = require('mongoose');
@@ -7,6 +10,7 @@ const hrmsRouter= require('./routes/hrmsRoutes/routes');
 const users=require('./routes/users')
 const auth=require('./routes/auth')
 const express = require('express');
+const error=require('./middleware/error')
 const cors=require('cors')
 const app = express();
 const {forceTransform}=require('./transformation/hrms')
@@ -28,5 +32,17 @@ app.use('/api/hrms',hrmsRouter);
 app.use('/api/users',users)
 app.use('/api/auth',auth)
 app.use('/api/pms',pmsRouter)
+app.use(error)
+
+process.on('uncaughtException',(ex)=>{
+  console.log('WE GOT UNCAUGHT EXCEPTION: '+ex)
+  process.exit(1)
+})
+
+process.on('unhandledRejection',(ex)=>{
+  console.log('WE GOT UNHANDELED REJECTION: '+ex.message)
+  process.exit(1)
+})
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on port ${port}...`));
