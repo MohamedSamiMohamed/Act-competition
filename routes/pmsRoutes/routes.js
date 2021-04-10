@@ -49,6 +49,17 @@ router.get('/fileDetails',asyncMiddleWare(async(req,res)=>{
     }
 ))
 
+router.delete('/fileDetails',asyncMiddleWare(async(req,res)=>{
+    let fileDetails=await FileDetails.findOneAndDelete({userID:req.user._id})
+    if(!fileDetails){
+        return res.status(404).send("This user hasn't uploaded file details yet")
+    }
+    else{
+        return res.send("User's file details has been deleted successfully")
+    }
+}
+))
+
 router.post('/variables',async(req,res)=>{
     const {error} =validateVariables(req.body)
     if(error){
@@ -90,6 +101,18 @@ router.get('/variables',asyncMiddleWare(async(req,res)=>{
             return res.send(true)
         }
     }))
+
+router.delete('/variables',asyncMiddleWare(async(req,res)=>{
+    let variables=await Variables.findOneAndDelete({userID:req.user._id})
+    if(!variables){
+        return res.status(404).send("This user hasn't uploaded variables yet")
+    }
+    else{
+        return res.send("User's variables has been deleted successfully")
+    }
+}
+))
+    
 
 router.get('/variablesDetails',asyncMiddleWare(async(req,res)=>{
         let variables=await Variables.findOne({userID:req.user._id})
@@ -146,6 +169,17 @@ router.get('/configuration',asyncMiddleWare(async (req,res)=>{
         return res.status(200).send(true)
     }
 }))
+
+router.delete('/configuration',asyncMiddleWare(async(req,res)=>{
+    let config=await sunConfig.findOneAndDelete({userID:req.user._id})
+    if(!config){
+        return res.status(404).send("This user hasn't uploaded configuration yet")
+    }
+    else{
+        return res.send("User's configuration has been deleted successfully")
+    }
+}
+))
 
 router.get('/daysStatus',asyncMiddleWare(async (req,res)=>{
 
