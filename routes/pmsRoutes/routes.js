@@ -70,6 +70,7 @@ router.post('/variables',async(req,res)=>{
             })
         })
         let variables= new Variables({
+            skippedLines:req.body.skippedLines,
             userID: req.user._id,
             variables:variablesArr
         })

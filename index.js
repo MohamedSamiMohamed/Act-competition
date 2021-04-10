@@ -1,7 +1,4 @@
 
-const startupDebugger=require('debug')('app:startup')
-const dbDebugger=require('debug')('app:db')
-const sqlDebugger=require('debug')('app:sql')
 const morgan=require('morgan')
 const Joi = require('joi');
 const mongoose = require('mongoose');
