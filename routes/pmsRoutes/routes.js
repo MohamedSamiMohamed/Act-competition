@@ -283,7 +283,7 @@ router.post('/forceTrans',asyncMiddleWare(async(req,res)=>{
             }
             else{
                 if(pmsLog.status==='missed'){
-                    await forceTransformPMS(req.body.day,req.body.month,req.user._id,req.body.path,req.body.fileName,req.body.extension,req.body.skippedLines) 
+                    await forceTransformPMS(req.body.day,req.body.month,req.body.year,req.user._id,req.body.path,req.body.fileName,req.body.extension,req.body.skippedLines) 
                     res.send('Transformation is done and this month is currently posted, check to hard-post it.')
                     
                 }

@@ -4,7 +4,7 @@ var Connection = require('tedious').Connection;
 var Request = require('tedious').Request;
 var TYPES = require('tedious').TYPES;
 const schedule = require('node-schedule');
-const { PMSLog } = require('../models/pmsModels/logs');
+const PMSLog= require('../models/pmsModels/logs');
 const {sunConfig}=require('../models/pmsModels/configuration');
 const { Variables } = require('../models/pmsModels/variables');
 const { fileDetails } = require('../models/pmsModels/fileDetails');
@@ -14,7 +14,7 @@ const fs = require("fs");
 
 
 let forceTransFlag = new Boolean(false);
-let forcedMonth, forcedDay;
+let forcedMonth, forcedDay,forcedYear;
 
 //This function will run every day at 12 AM
 const job = schedule.scheduleJob('0 0 * * *', async () => {
@@ -51,10 +51,11 @@ const job = schedule.scheduleJob('0 0 * * *', async () => {
 
 //This function will be called if the day was retrieved 
 //and the client wanted to transform data of a past day again
-async function forceTransform(requiredDay, requiredMonth, userId, path, filename, extension, skipped) {
+async function forceTransform(requiredDay, requiredMonth,requiredYear, userId, path, filename, extension, skipped) {
     try {
         forcedMonth = requiredMonth
         forcedDay = requiredDay
+        forcedYear= requiredYear
         forceTransFlag = true
         let sunConn = await databaseConnect(sunConnection['sunConnection'])
         let trans = await sunConfig.findOne({
@@ -100,9 +101,9 @@ async function getPMSData(sunConn, trans, userId, path, filename, extension, ski
             rowsCount = values[0] - skipped;
             rows = values.slice(1);
             if (forceTransFlag == false) {
-                const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, d.getMonth(), d.getDate());
+                const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, d.getMonth(), d.getDate(),d.getFullYear());
             } else {
-                const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, forcedMonth, forcedDay);
+                const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, forcedMonth, forcedDay,forcedYear);
             }
             resolve(1);
             
@@ -139,7 +140,7 @@ async function insertIntoSunHeaders(sunConn) {
 
 //This function responsible for the insertion the rows from PMS file in the SUN Database
 
-function insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID, month, day) {
+function insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID, month, day,year) {
     let requestString = "INSERT INTO PK1_PSTG_DETAIL"
     
     let remainString = " VALUES"
@@ -174,9 +175,9 @@ function insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID,
         request.on('requestCompleted', function () {
             console.log('transformation done')
             if (forceTransFlag == false) {
-                //createLog(userID, month, day);
+                createLog(userID, month, day,year);
             } else {
-                //updateLog(userID, month, day);
+                updateLog(userID, month, day,year);
             }
             resolve(1)
         });
@@ -191,9 +192,6 @@ function deleteFile(file_path, file_name) {
     mywatcher.on("process", function process(file) {
         const watchFile = file_path + '/' + file_name;
         fs.unlink(watchFile, function (err) {
-            //To handle: If a file with different name was uploaded...
-            //Had to comment the error
-            //if (err) throw err;
         });
     });
     mywatcher.start();
@@ -201,24 +199,24 @@ function deleteFile(file_path, file_name) {
 
 
 // create and upload log when the data is transformed 
-async function createLog(userId, month, day) {
+async function createLog(userId, month, day,year,) {
     let log = new PMSLog({
         userID: userId,
         status: 'posted',
         month: month,
-        year: '2021',
-        day: day
+        year: year,
+        day: day,
+        timeStamp: Date.now(),
     })
     await log.save()
 }
 
-//Note: Year!!!
 // update log when the status was retrieved then transform happens 
-async function updateLog(userId, month, day) {
+async function updateLog(userId, month, day,year) {
     let PMSLog = await PMSLog.findOne({
         userID: userId,
         month: month,
-        year: '2021',
+        year: year,
         day: day
     })
     PMSLog.status = 'posted'
