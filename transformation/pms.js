@@ -20,7 +20,25 @@ let forcedMonth, forcedDay;
 const job = schedule.scheduleJob('0 0 * * *', async () => {
     try {
         let sunConn = await databaseConnect(sunConnection['sunConnection']);
-        const pms = await getPMSData();
+        let trans = await sunConfig.find({
+            userID: userId
+        }).select({
+            "trans": 1,
+            "_id": 0
+        });
+        trans = trans[0]['trans']
+        userId = trans[0]['userID']
+        let details = await fileDetails.find({
+            userID: userId
+        }).select({
+            "path": 1,
+            "fileName": 1,
+            "extension": 1,
+            "_id": 0
+        });
+        path = details[0]['path']
+        file_name = details[0]['fileName'].toString() + details[0]['extension'].toString()
+        let pms = await getPMSData(sunConn, trans, userId);
         deleteFile(path, file_name);
     } catch (err) {
         console.log(err.message)
@@ -28,20 +46,13 @@ const job = schedule.scheduleJob('0 0 * * *', async () => {
 });
 
 //This function will be called if the day was retrieved 
-//and the client wanted to transform data of a pervious day again
-//-------------------------------------------------
+//and the client wanted to transform data of a past day again
 async function forceTransform(requiredDay, requiredMonth, userId) {
     try {
         forcedMonth = requiredMonth
+        forcedDay = requiredDay
         forceTransFlag = true
         let sunConn = await databaseConnect(sunConnection['sunConnection'])
-        let hrmsConnection = await connectionModel.findOne({
-            userID: userId
-        }).select({
-            "_id": 0,
-            "__v": 0
-        })
-        delete hrmsConnection['userID']
         let trans = await sunConfig.find({
             userID: userId
         }).select({
@@ -58,7 +69,7 @@ async function forceTransform(requiredDay, requiredMonth, userId) {
 
 
 // This function is responsible for fetching the data from PMS file
-function getPMSData(sunConn, userId) {
+function getPMSData(sunConn, trans, userId) {
     try {
         let d = new Date();
         //Filling positions and lengths arrays
@@ -88,14 +99,6 @@ function getPMSData(sunConn, userId) {
         });
         file = details[0]['path'] + "/" + details[0]['fileName'] + details[0]['extension'];
         console.log(`file is ${file}`);
-        //Getting transformation
-        let trans = await sunConfig.find({
-            userID: userId
-        }).select({
-            "trans": 1,
-            "_id": 0
-        });
-        trans = trans[0]['trans'];
         return new Promise((resolve, reject) => {
             if (err) {  
                 reject(err.message);
@@ -113,6 +116,7 @@ function getPMSData(sunConn, userId) {
                 } else {
                     const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID, forcedMonth, forcedDay);
                 }
+                resolve(1);
             }
         });
     } catch (err) {
