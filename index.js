@@ -11,9 +11,10 @@ const error=require('./middleware/error')
 const cors=require('cors')
 const app = express();
 const {forceTransform}=require('./transformation/hrms')
+const {forceTransformPMS}=require('./transformation/pms')
 let localDB=process.env.MONGODB_CONNECTION_STRING_LOCAL
 let clusterDB=process.env.MONGODB_CONNECTION_STRING
-mongoose.connect(localDB,
+mongoose.connect(clusterDB,
 {useNewUrlParser: true, 
 useUnifiedTopology: true,
 useFindAndModify: false,
@@ -42,4 +43,6 @@ process.on('unhandledRejection',(ex)=>{
 })
 
 const port = process.env.PORT || 3000;
+
 app.listen(port, () => console.log(`Listening on port ${port}...`));
+
