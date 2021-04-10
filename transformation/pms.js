@@ -37,7 +37,7 @@ const job = schedule.scheduleJob('0 0 * * *', async () => {
             "_id": 0
         });
         path = details[0]['path']
-        file_name = details[0]['fileName'].toString() + details[0]['extension'].toString()
+        file_name = details[0]['fileName'] + details[0]['extension']
         let pms = await getPMSData(sunConn, trans, userId);
         deleteFile(path, file_name);
     } catch (err) {

@@ -15,11 +15,9 @@ async function parserFun(file, pos, len) {
         values.push(rows.length);
         for (let i = 1; i < rows.length; i += 1) {
             for (let j = 0; j < pos.length; j += 1) {
-                values.push(
-                    rows[i].slice(pos[j], pos[j] + len[j] - 1).trim()
-                );
+                values.push([i, rows[i].slice(pos[j], pos[j] + len[j] - 1).trim()]
+                ); 
             }
-            //values.push('end_row');
         }
         return values;
     } 
