@@ -100,7 +100,7 @@ async function getPMSData(sunConn, trans, userId, path, filename, extension, ski
             rowsCount = values[0] - skipped;
             rows = values.slice(1);
             if (forceTransFlag == false) {
-                const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, d.getMonth(), d.getDay());
+                const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, d.getMonth(), d.getDate());
             } else {
                 const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, forcedMonth, forcedDay);
             }
