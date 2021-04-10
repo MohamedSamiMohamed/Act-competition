@@ -8,10 +8,10 @@ const router = express.Router()
 const {User}= require('../../models/user');
 const {HrmsLog}= require('../../models/hrmsModels/logs');
 const { func } = require('joi');
-const {forceTransform}=require('../../transformation/hrms')
+const {forceTransform}=require('../../transformation/hrms');
 router.use(authMiddleWare)
 
-router.post('/configStr',asyncMiddleWare(async(req,res)=>{
+router.post('/connection',asyncMiddleWare(async(req,res)=>{
 const result=validate(req.body)
 if(result.error){
     return res.status(400).send(result.error.details[0].message)
@@ -45,6 +45,28 @@ res.send(config)
 }
 }))
 
+
+router.get('/connection',asyncMiddleWare(async (req,res)=>{
+    let connection=await connectionModel.findOne({userID: req.user._id})
+    if(!connection){
+    return res.status(200).send(false)
+}
+else{
+    return res.status(200).send(true)
+}
+}))
+
+
+router.delete('/connection',asyncMiddleWare(async(req,res)=>{
+    const connection= await connectionModel.findOneAndDelete({userID:req.user._id})
+    if(!connection){
+        return res.status(404).send('This user does not have connection string, try to upload a connection string')
+    }
+    else{
+        return res.send(`This connection string has been deleted successfully ${connection}`)
+    }    
+}))
+
 router.post('/configuration',asyncMiddleWare(async(req, res) => {
     const {error} =validateConfiguration(req.body)
     if(error){
@@ -71,6 +93,27 @@ if(config){
         await conf.save();
         res.send('Configuration Settings Uploaded Successfully!');
     }
+}))
+
+router.get('/configuration',asyncMiddleWare(async (req,res)=>{
+    let configured=await sunConfig.findOne({userID: req.user._id})
+    if(!configured){
+    return res.status(200).send(false)
+}
+else{
+    return res.status(200).send(true)
+}
+}))
+
+
+router.delete('/configuration',asyncMiddleWare(async (req,res)=>{
+    let configuration=await sunConfig.findOneAndDelete({userID: req.user._id})
+    if(!configuration){
+    return res.status(404).send('This user does not have configuration, try to upload a configuration mapping')
+}
+else{
+    return res.send(`This user's configuration has been deleted successfully`)
+}
 }))
 
 router.post('/forceTrans',asyncMiddleWare(async(req,res)=>{
@@ -100,26 +143,6 @@ router.post('/forceTrans',asyncMiddleWare(async(req,res)=>{
     }
 }))
 
-
-router.get('/isClient',asyncMiddleWare(async (req,res)=>{
-        let connection=await connectionModel.findOne({userID: req.user._id})
-        if(!connection){
-        return res.status(200).send(false)
-    }
-    else{
-        return res.status(200).send(true)
-    }
-}))
-
-router.get('/configured',asyncMiddleWare(async (req,res)=>{
-        let configured=await sunConfig.findOne({userID: req.user._id})
-        if(!configured){
-        return res.status(200).send(false)
-    }
-    else{
-        return res.status(200).send(true)
-    }
-}))
 
 
 router.post('/retrieve',asyncMiddleWare(async(req,res)=>{
