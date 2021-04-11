@@ -9,7 +9,6 @@ const {sunConfig}=require('../models/pmsModels/configuration');
 const { Variables } = require('../models/pmsModels/variables');
 const { FileDetails } = require('../models/pmsModels/fileDetails');
 const parser = require('../utils/parser');
-const Watcher = require('../utils/fileWatcher');
 const fs = require("fs");
 let mapping = {};
 let forceTransFlag = new Boolean(false);
