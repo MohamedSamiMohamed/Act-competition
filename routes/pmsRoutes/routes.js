@@ -33,7 +33,7 @@ router.post('/fileDetails',asyncMiddleWare(async(req,res)=>{
             extension: req.body.extension
         })
            await fileDetails.save()
-           res.send(fileDetails)
+           return res.send(fileDetails)
 
 
     }
@@ -88,7 +88,7 @@ router.post('/variables',async(req,res)=>{
             variables:variablesArr
         })
            await variables.save()
-           res.send(variables)
+           return res.send(variables)
     }
 }
 )
@@ -245,7 +245,7 @@ router.post('/acceptTrans',asyncMiddleWare(async(req,res)=>{
                 pmsLog.status='hard-posted',
                 pmsLog.timeStamp= Date.now()
                 await pmsLog.save()
-                res.send('This transformation is accepted successfully.')
+                return res.send('This transformation is accepted successfully.')
             }
 
     }
@@ -291,11 +291,11 @@ router.post('/forceTrans',asyncMiddleWare(async(req,res)=>{
             else{
                 if(pmsLog.status==='missed'){
                     await forceTransformPMS(req.body.day,req.body.month,req.body.year,req.user._id,req.body.path,req.body.fileName,req.body.extension,skippedLines)
-                    res.send('Transformation is done and this month is currently posted, check to hard-post it.')
+                    return res.send('Transformation is done and this month is currently posted, check to hard-post it.')
                     
                 }
                 else{
-                    res.status(400).send('This day is not missed to be transformed by forcing')
+                   return res.status(400).send('This day is not missed to be transformed by forcing')
                 }
             
 

@@ -41,7 +41,7 @@ const config=new connectionModel({
     }
 })
 const result=await config.save()
-res.send(config)
+return res.send(config)
 }
 }))
 
@@ -152,11 +152,11 @@ router.post('/forceTrans',asyncMiddleWare(async(req,res)=>{
             else{
                 if(hrmsLog.status==='missed'){
                     await forceTransform(month,req.user._id)
-                    res.send('Transformation is done and this month is currently posted, check to hard-post it.')
+                    return res.send('Transformation is done and this month is currently posted, check to hard-post it.')
                     
                 }
                 else{
-                    res.status(400).send('This month is not missed to be transformed by forcing')
+                    return res.status(400).send('This month is not missed to be transformed by forcing')
                 }
             
 
@@ -213,7 +213,7 @@ router.post('/acceptTrans',asyncMiddleWare(async(req,res)=>{
                 hrmsLog.status='hard-posted',
                 hrmsLog.timeStamp= Date.now()
                 await hrmsLog.save()
-                res.send('This transformation is accepted successfully.')
+                return res.send('This transformation is accepted successfully.')
             }
 
     }))
