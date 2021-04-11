@@ -221,7 +221,7 @@ async function updateLog(userId, month, day,year) {
     })
     PMSLog.status = 'posted'
     PMSLog.timeStamp = Date.now()
-    await PmsLog.save()
+    await PMSLog.save()
 }
 
 // this function create connection to SQL server
