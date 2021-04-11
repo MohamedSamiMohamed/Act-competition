@@ -175,6 +175,7 @@ function insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID,
                 console.log(rowCount + ' rows inserted');
             }
         });
+        request.setTimeout(300000);
         request.on('requestCompleted', function () {
             console.log('transformation done')
             if (forceTransFlag == false) {

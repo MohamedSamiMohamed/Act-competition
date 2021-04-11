@@ -194,6 +194,7 @@ return new Promise((resolve,reject)=>{
         console.log(rowCount+' rows inserted')
     }
     });
+    request.setTimeout(300000);
     request.on('requestCompleted', function() {  
         console.log('transformation done')
         if(forceTransFlag==false){
