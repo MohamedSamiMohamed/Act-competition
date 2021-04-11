@@ -12,7 +12,7 @@ const parser = require('../utils/parser');
 const Watcher = require('../utils/fileWatcher');
 const fs = require("fs");
 
-
+let mapping={};
 let forceTransFlag = new Boolean(false);
 let forcedMonth, forcedDay,forcedYear;
 
@@ -88,10 +88,12 @@ async function getPMSData(sunConn, trans, userId, path, filename, extension, ski
             "_id": 0
         });
         variables = variables[0]['variables'];
-        
+        i=0;
         variables.forEach(element => {
             pos.push(element.startPosition);
             len.push(element.length);
+            mapping[`${element.fieldName}`]=i
+            i++;
         });
         file = path + "/" + filename + extension;
         return new Promise(async(resolve, reject) => {
@@ -142,16 +144,17 @@ async function insertIntoSunHeaders(sunConn) {
 
 function insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID, month, day,year) {
     let requestString = "INSERT INTO PK1_PSTG_DETAIL"
-    
     let remainString = " VALUES"
     let i;
+    let position;
     rows.forEach(row => {
         i = 0;
         remainString += `('${headerID}','${rowsCount}',`
         rowsCount -= 1;
         trans.forEach(element => {
             if (element.isConst === false) {
-                remainString += `'${row[i]}',` 
+                position=mapping[element.mappedVal]
+                remainString += `'${row[position]}',` 
                 i += 1
             } else {
                 remainString += `'${element.mappedVal}',`
