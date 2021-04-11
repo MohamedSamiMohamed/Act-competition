@@ -11,25 +11,23 @@ const { FileDetails } = require('../models/pmsModels/fileDetails');
 const parser = require('../utils/parser');
 const Watcher = require('../utils/fileWatcher');
 const fs = require("fs");
-
-let mapping={};
+let mapping = {};
 let forceTransFlag = new Boolean(false);
-let forcedMonth, forcedDay,forcedYear;
+let forcedMonth, forcedDay, forcedYear;
 
-//This function will run every day at 12 AM
+//This function will run every day at 12 AM and upload data from PMS file to the database
 const job = schedule.scheduleJob('0 0 * * *', async () => {
     try {
         let sunConn = await databaseConnect(sunConnection['sunConnection']);
 
-        let details = await FileDetails.find({
-        }).select({
+        let details = await FileDetails.find({}).select({
             "userID": 1,
             "path": 1,
             "fileName": 1,
             "extension": 1,
             "_id": 0
         });
-        details.forEach(async (element)=>{
+        details.forEach(async (element) => {
             userId = element.userID;
             path = element.path
             file_name = element.fileName + element.extension
@@ -41,7 +39,7 @@ const job = schedule.scheduleJob('0 0 * * *', async () => {
             });
             trans_array = trans.trans;
             let pms = await getPMSData(sunConn, trans_array, userId, path, element.fileName, element.extension);
-          //  deleteFile(path, file_name);
+            deleteFile(path, file_name);
         });
 
     } catch (err) {
@@ -51,11 +49,11 @@ const job = schedule.scheduleJob('0 0 * * *', async () => {
 
 //This function will be called if the day was retrieved 
 //and the client wanted to transform data of a past day again
-async function forceTransform(requiredDay, requiredMonth,requiredYear, userId, path, filename, extension, skipped) {
+async function forceTransform(requiredDay, requiredMonth, requiredYear, userId, path, filename, extension, skipped) {
     try {
         forcedMonth = requiredMonth
         forcedDay = requiredDay
-        forcedYear= requiredYear
+        forcedYear = requiredYear
         forceTransFlag = true
         let sunConn = await databaseConnect(sunConnection['sunConnection'])
         let trans = await sunConfig.findOne({
@@ -66,15 +64,13 @@ async function forceTransform(requiredDay, requiredMonth,requiredYear, userId, p
         })
         trans_array = trans.trans
         const val = await getPMSData(sunConn, trans_array, userId, path, filename, extension, skipped)
-        //deleteFile(path, filename+extension);
+        deleteFile(path, filename+extension);
     } catch (err) {
         console.log(err.message)
     }
 }
 
-
-
-// This function is responsible for fetching the data from PMS fil
+// This function is responsible for fetching the data from PMS file and adding it to the database
 async function getPMSData(sunConn, trans, userId, path, filename, extension, skipped) {
     try {
         let d = new Date();
@@ -88,38 +84,38 @@ async function getPMSData(sunConn, trans, userId, path, filename, extension, ski
             "_id": 0
         });
         variables = variables[0]['variables'];
-        i=0;
+        i = 0;
         variables.forEach(element => {
             pos.push(element.startPosition);
             len.push(element.length);
-            mapping[`${element.fieldName}`]=i
+            mapping[`${element.fieldName}`] = i
             i++;
         });
+        //Forming file using path, name and extension
         file = path + "/" + filename + extension;
-        return new Promise(async(resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             let rowsCount, rows
             const headerID = await insertIntoSunHeaders(sunConn);
             values = await parser(file, pos, len, skipped);
             rowsCount = values[0] - skipped;
             rows = values.slice(1);
             if (forceTransFlag == false) {
-                const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, d.getMonth(), d.getDate(),d.getFullYear());
+                const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, d.getMonth(), d.getDate(), d.getFullYear());
             } else {
-                const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, forcedMonth, forcedDay,forcedYear);
+                const detailsInsertion = await insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userId, forcedMonth, forcedDay, forcedYear);
             }
             resolve(1);
-            
+
         });
     } catch (err) {
         console.log(err.message)
     }
 }
 
-//This function responsible for insertion into SUN database headers (one row per transformation)
+//This function is responsible for the insertion into SUN database headers (one row per transformation)
 async function insertIntoSunHeaders(sunConn) {
-    //let requestString = "INSERT INTO PK1_PSTG_HDR (UPDATE_COUNT,LAST_CHANGE_USER_ID,LAST_CHANGE_DATETIME) VALUES (0,'sss',20) select @@identity"
-    let requestString="INSERT INTO PK1_PSTG_HDR (UPDATE_COUNT,LAST_CHANGE_USER_ID,LAST_CHANGE_DATETIME,CREATED_BY,CREATED_DATETIME,CREATION_TYPE ,DESCR,LAST_STATUS,POST_TYPE,POST_WRITE_TO_HOLD,POST_ROUGH_BOOK,POST_ALLOW_BAL_TRANS,POST_SUSPENSE_ACNT,POST_OTHER_ACNT,POST_BAL_BY,POST_DFLT_PERD,POST_RPT_ERR_ONLY,POST_SUPPRESS_SUB_MSG,POST_RPT_FMT,JRNL_TYPE,POST_RPT_ACNT,CNT_ORIG,CNT_REJECTED,CNT_BAL,CNT_REVERSALS,CNT_POSTED,CNT_SUBSTITUTED,CNT_PRINTED,POST_LDG,POST_ALLOW_OVER_BDGT,POST_ALLOW_SUSPNS_ACNT,CNT_ZERO_VAL_ENTRIES,JNL_NUM,NUM_OF_IMBALANCES,DR_AMT_POSTED,CR_AMT_POSTED,POST_TXN_REF_BAL) VALUES ('0','OFS',GETDATE() ,'OFS',GETDATE(),'LI','HRMS','0','2','1','0','0','999999999','999999999','1',0,1,1,'LIALL', 'HRM' ,'999999999','0','0','0','0','0','0','0','A','0','0','0','0','0','0.000','0.000','0') select @@identity"
-  
+    let requestString = "INSERT INTO PK1_PSTG_HDR (UPDATE_COUNT,LAST_CHANGE_USER_ID,LAST_CHANGE_DATETIME,CREATED_BY,CREATED_DATETIME,CREATION_TYPE ,DESCR,LAST_STATUS,POST_TYPE,POST_WRITE_TO_HOLD,POST_ROUGH_BOOK,POST_ALLOW_BAL_TRANS,POST_SUSPENSE_ACNT,POST_OTHER_ACNT,POST_BAL_BY,POST_DFLT_PERD,POST_RPT_ERR_ONLY,POST_SUPPRESS_SUB_MSG,POST_RPT_FMT,JRNL_TYPE,POST_RPT_ACNT,CNT_ORIG,CNT_REJECTED,CNT_BAL,CNT_REVERSALS,CNT_POSTED,CNT_SUBSTITUTED,CNT_PRINTED,POST_LDG,POST_ALLOW_OVER_BDGT,POST_ALLOW_SUSPNS_ACNT,CNT_ZERO_VAL_ENTRIES,JNL_NUM,NUM_OF_IMBALANCES,DR_AMT_POSTED,CR_AMT_POSTED,POST_TXN_REF_BAL) VALUES ('0','OFS',GETDATE() ,'OFS',GETDATE(),'LI','HRMS','0','2','1','0','0','999999999','999999999','1',0,1,1,'LIALL', 'HRM' ,'999999999','0','0','0','0','0','0','0','A','0','0','0','0','0','0.000','0.000','0') select @@identity"
+
     let headerID;
     return new Promise((resolve, reject) => {
         request = new Request(requestString, (err, rowCount) => {
@@ -140,9 +136,8 @@ async function insertIntoSunHeaders(sunConn) {
 
 }
 
-//This function responsible for the insertion the rows from PMS file in the SUN Database
-
-function insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID, month, day,year) {
+//This function responsible for the insertion of rows from PMS file into the SUN Database
+function insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID, month, day, year) {
     let requestString = "INSERT INTO PK1_PSTG_DETAIL"
     let remainString = " VALUES"
     let i;
@@ -153,8 +148,8 @@ function insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID,
         rowsCount -= 1;
         trans.forEach(element => {
             if (element.isConst === false) {
-                position=mapping[element.mappedVal]
-                remainString += `'${row[position]}',` 
+                position = mapping[element.mappedVal]
+                remainString += `'${row[position]}',`
                 i += 1
             } else {
                 remainString += `'${element.mappedVal}',`
@@ -170,17 +165,16 @@ function insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID,
         request = new Request(requestString, (err, rowCount) => {
             if (err) {
                 console.log(err);
-            } 
-            else {
+            } else {
                 console.log(rowCount + ' rows inserted');
             }
         });
         request.on('requestCompleted', function () {
             console.log('transformation done')
             if (forceTransFlag == false) {
-                createLog(userID, month, day,year);
+                createLog(userID, month, day, year);
             } else {
-                updateLog(userID, month, day,year);
+                updateLog(userID, month, day, year);
             }
             resolve(1)
         });
@@ -189,20 +183,22 @@ function insertIntoSunDetails(sunConn, trans, rows, rowsCount, headerID, userID,
 }
 
 //This function deletes the PMS file after data insertion
-function deleteFile(file_path, file_name) {
-    let mywatcher = new Watcher(file_path);
 
-    mywatcher.on("process", function process(file) {
-        const watchFile = file_path + '/' + file_name;
-        fs.unlink(watchFile, function (err) {
+//This function deletes the PMS file after data insertion
+function deleteFile(Path, file_name) {
+    try {
+        file = Path + "/" + file_name
+        fs.unlink(file, function (err) {
+            if (err) throw err;
+            console.log('File deleted!');
         });
-    });
-    mywatcher.start();
+    } catch (err) {
+        console.log(err.message)
+    }
 }
 
-
-// create and upload log when the data is transformed 
-async function createLog(userId, month, day,year,) {
+// create log when the data is transformed 
+async function createLog(userId, month, day, year, ) {
     let log = new PmsLog({
         userID: userId,
         status: 'posted',
@@ -215,7 +211,7 @@ async function createLog(userId, month, day,year,) {
 }
 
 // update log when the status was retrieved then transform happens 
-async function updateLog(userId, month, day,year) {
+async function updateLog(userId, month, day, year) {
     let PMSLog = await PmsLog.findOne({
         userID: userId,
         month: month,
@@ -227,7 +223,7 @@ async function updateLog(userId, month, day,year) {
     await PMSLog.save()
 }
 
-// this function create connection to SQL server
+// this function creates a connection to SQL server
 function databaseConnect(config) {
     return new Promise((resolve, reject) => {
         var connection = new Connection(config);
@@ -243,4 +239,4 @@ function databaseConnect(config) {
     })
 }
 exports.forceTransformPMS = forceTransform
-exports.createLog=createLog
+exports.createLog = createLog
