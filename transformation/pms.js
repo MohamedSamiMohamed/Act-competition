@@ -7,7 +7,7 @@ const schedule = require('node-schedule');
 const {PmsLog}= require('../models/pmsModels/logs');
 const {sunConfig}=require('../models/pmsModels/configuration');
 const { Variables } = require('../models/pmsModels/variables');
-const { fileDetails } = require('../models/pmsModels/fileDetails');
+const { FileDetails } = require('../models/pmsModels/fileDetails');
 const parser = require('../utils/parser');
 const Watcher = require('../utils/fileWatcher');
 const fs = require("fs");
@@ -21,7 +21,7 @@ const job = schedule.scheduleJob('0 0 * * *', async () => {
     try {
         let sunConn = await databaseConnect(sunConnection['sunConnection']);
 
-        let details = await fileDetails.find({
+        let details = await FileDetails.find({
         }).select({
             "userID": 1,
             "path": 1,
