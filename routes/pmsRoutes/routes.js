@@ -110,7 +110,13 @@ router.delete('/variables',asyncMiddleWare(async(req,res)=>{
         return res.status(404).send("This user hasn't uploaded variables yet")
     }
     else{
-        return res.send("User's variables has been deleted successfully")
+        let config=await sunConfig.findOneAndDelete({userID:req.user._id})
+        if(!config){
+            return res.send("User's variables has been deleted successfully")
+        }
+        else{
+            return res.send("User's variables and configuration has been deleted successfully")
+        }
     }
 }
 ))
