@@ -72,9 +72,9 @@ router.put('/connection',asyncMiddleWare(async (req,res)=>{
     let connection=await connectionModel.findOne({userID: req.user._id})
     if(connection){
         connection.server=req.body.server,
-        connection.userName=req.body.userName,
-        connection.database= req.body.database,
-        connection.password=req.body.password
+        connection.authentication.options.userName=req.body.userName,
+        connection.options.database= req.body.database,
+        connection.authentication.options.password=req.body.password
         await connection.save()
         return res.send("Connection string has been updated successfully"+ connection)
     }
