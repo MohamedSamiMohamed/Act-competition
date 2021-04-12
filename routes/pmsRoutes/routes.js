@@ -119,14 +119,33 @@ router.post('/variables',async(req,res)=>{
 
 
 router.get('/variables',asyncMiddleWare(async(req,res)=>{
+    let variables=await Variables.findOne({userID:req.user._id})
+    if(!variables){
+        return res.status(400).send("This user hasn't uploaded variables yet.")
+    }
+    else{
+        return res.send(_.pick(variables,['skippedLines','variables']))
+    }
+}))
+
+router.put('/variables',asyncMiddleWare(async(req,res)=>{
+    const {error} =validateVariables(req.body)
+    if(error){
+        res.status(400).send(error.details[0].message)
+        return 
+    }
         let variables=await Variables.findOne({userID:req.user._id})
         if(!variables){
-            return res.send(false)
+            return res.status(400).send("This user hasn't uploaded variables yet.")
         }
         else{
-            return res.send(true)
+        variables.skippedLines=req.body.skippedLines
+         variables.variables=req.body.variables
+         await variables.save()
+         return res.send("Variables has been updated successfully")
         }
-    }))
+}))
+
 
 router.delete('/variables',asyncMiddleWare(async(req,res)=>{
     let variables=await Variables.findOneAndDelete({userID:req.user._id})

@@ -144,7 +144,7 @@ router.put('/configuration',asyncMiddleWare(async (req,res)=>{
     }
     let configured=await sunConfig.findOne({userID: req.user._id})
     if(configured){
-        configured.trans=req.body.trans
+        configured.trans=req.body.trans 
         await configured.save()
         return res.send("Configuration has been updated successfully")
     }
