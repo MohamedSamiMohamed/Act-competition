@@ -72,7 +72,7 @@ try{
     else{
     requestString+=` FROM JV_Report_Details_Tbl WHERE The_Month=${forcedMonth} AND User_ID=${1};`
     }
-    console.log(requestString)
+    //console.log(requestString)
     return new Promise((resolve,reject)=>{
         request = new Request(requestString,async (err,rowCount,rows)=> {  
         if (err) {  
@@ -136,7 +136,7 @@ let requestString="INSERT INTO PK1_PSTG_DETAIL "
 let reaminString=" VALUES"
 let rowsNum=rows.length
 rows.forEach(row=>{
-    console.log(row);
+   // console.log(row);
 reaminString+=`('${headerID}','${rowsNum}',`
 rowsNum-=1
 trans.forEach(element=>{
@@ -155,7 +155,7 @@ reaminString+='),'
 reaminString = reaminString.substring(0, reaminString.length - 1);
 reaminString+=';'
 requestString+=reaminString
-console.log(requestString);
+//console.log(requestString);
 
 return new Promise((resolve,reject)=>{
     request = new Request(requestString, (err,rowCount,rows)=> {  
@@ -185,7 +185,6 @@ return new Promise((resolve,reject)=>{
 
 // creat and upload log when the data is transformed from hrms to sun
 async function createLog(userId,month){
-    console.log('here')
     try{
     let log=new HrmsLog({
         userID:userId,
