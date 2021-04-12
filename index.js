@@ -10,6 +10,7 @@ const express = require('express');
 const error=require('./middleware/error')
 const cors=require('cors')
 const app = express();
+require('./prod')(app)
 const {forceTransform}=require('./transformation/hrms')
 const {forceTransformPMS}=require('./transformation/pms')
 const {createLog}=require('./transformation/pms')

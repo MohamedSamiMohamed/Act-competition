@@ -14,7 +14,7 @@ let mapping = {};
 let forceTransFlag = new Boolean(false);
 let forcedMonth, forcedDay, forcedYear;
 
-//This function will run every day at 12 AM and upload data from PMS file to the database
+//This function will run every hour to check for users who want to preform transformation at this time and upload data from PMS file to the database
 const job = schedule.scheduleJob(`0 * * * *`, async () => {
         let date=new Date()
         let details = await FileDetails.find({scheduledTime:date.getHours()}).select({
