@@ -1,3 +1,4 @@
+const _=require('lodash')
 const asyncMiddleWare=require('../../middleware/asyncMiddleware')
 const {authMiddleWare} =require('../../middleware/auth')
 const {forceTransformPMS}=require('../../transformation/pms');
@@ -14,7 +15,6 @@ router.use(authMiddleWare)
 
 
 router.post('/fileDetails',asyncMiddleWare(async(req,res)=>{
-
     const {error} =validateFileDetails(req.body)
     if(error){
         res.status(400).send(error.details[0].message)
@@ -43,12 +43,35 @@ router.post('/fileDetails',asyncMiddleWare(async(req,res)=>{
 router.get('/fileDetails',asyncMiddleWare(async(req,res)=>{
         let fileDetails=await FileDetails.findOne({userID:req.user._id})
         if(!fileDetails){
-            return res.send(false)
+            return res.status(400).send("This user hasn't uploaded file details yet.")
         }
         else{
-            return res.send(true)
+            return res.send(_.pick(fileDetails,['scheduledTime',"path","fileName","extension"]))
         }
     }
+))
+
+router.put('/fileDetails',asyncMiddleWare(async(req,res)=>{
+    console.log(req.body)
+    const {error} =validateFileDetails(req.body)
+    if(error){
+        res.status(400).send(error.details[0].message)
+        return 
+    }
+    let fileDetails=await FileDetails.findOne({userID:req.user._id})
+    console.log(fileDetails)
+    if(!fileDetails){
+        return res.status(400).send("This user hasn't uploaded file details yet.")
+    }
+    else{
+        fileDetails.scheduledTime=req.body.scheduledTime,
+        fileDetails.path=req.body.path,
+        fileDetails.fileName=req.body.fileName,
+        fileDetails.extension=req.body.extension
+        await fileDetails.save()
+        return res.send("user's file details has been updated successfully")
+    }
+}
 ))
 
 router.delete('/fileDetails',asyncMiddleWare(async(req,res)=>{
