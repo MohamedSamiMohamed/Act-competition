@@ -1,3 +1,4 @@
+const _=require('lodash')
 const asyncMiddleWare=require('../../middleware/asyncMiddleware')
 const {authMiddleWare} =require('../../middleware/auth')
 const {validate,connectionModel}= require('../../models/hrmsModels/connection');
@@ -48,11 +49,36 @@ return res.send(config)
 
 router.get('/connection',asyncMiddleWare(async (req,res)=>{
     let connection=await connectionModel.findOne({userID: req.user._id})
-    if(!connection){
-    return res.status(200).send(false)
+    console.log(connection)
+    if(connection){
+    return res.send({
+        server:connection.server,
+        userName:connection.authentication.options.userName,
+        password:connection.authentication.options.password,
+        database:connection.options.database
+    })
 }
 else{
-    return res.status(200).send(true)
+    return res.status(400).send("This user hasn't uploaded a connection string yet")
+}
+}))
+
+router.put('/connection',asyncMiddleWare(async (req,res)=>{
+    const result=validate(req.body)
+    if(result.error){
+        return res.status(400).send(result.error.details[0].message)
+        
+    }
+    let connection=await connectionModel.findOne({userID: req.user._id})
+    if(connection){
+        connection.server=req.body.server,
+        connection.userName=req.body.userName,
+        connection.database= req.body.database,
+        connection.password=req.body.password
+        return res.send("Connection string has been updated successfully"+ connection)
+    }
+else{
+    return res.status(400).send("This user hasn't uploaded a connection string yet")
 }
 }))
 
@@ -66,6 +92,8 @@ router.delete('/connection',asyncMiddleWare(async(req,res)=>{
         return res.send(`This connection string has been deleted successfully ${connection}`)
     }    
 }))
+
+
 
 router.post('/configuration',asyncMiddleWare(async(req, res) => {
     const {error} =validateConfiguration(req.body)
@@ -91,20 +119,37 @@ if(config){
             trans
         })
         await conf.save();
-        res.send('Configuration Settings Uploaded Successfully!');
+        return res.send('Configuration Settings Uploaded Successfully!');
     }
 }))
 
 router.get('/configuration',asyncMiddleWare(async (req,res)=>{
     let configured=await sunConfig.findOne({userID: req.user._id})
-    if(!configured){
-    return res.status(200).send(false)
-}
-else{
-    return res.status(200).send(true)
-}
+    if(configured){
+        return res.send(_.pick(configured,['trans']))
+    }
+    else{
+        return res.status(400).send("This user hasn't uploaded a configuration yet")
+
+    }
 }))
 
+
+router.put('/configuration',asyncMiddleWare(async (req,res)=>{
+    const result=validateConfiguration(req.body)
+    if(result.error){
+        return res.status(400).send(result.error.details[0].message)
+        
+    }
+    let configured=await sunConfig.findOne({userID: req.user._id})
+    if(configured){
+        configured.trans=req.body.trans
+        return res.send("Configuration has been updated successfully")
+    }
+else{
+    return res.status(400).send("This user hasn't uploaded a connection string yet")
+}
+}))
 
 router.delete('/configuration',asyncMiddleWare(async (req,res)=>{
     let configuration=await sunConfig.findOneAndDelete({userID: req.user._id})
