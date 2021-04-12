@@ -9,6 +9,10 @@ userID:{
     type:mongoose.Schema.Types.ObjectId,
     ref:'users'
 },
+scheduledTime:{
+    required:true,
+    type:Number
+},
 path:{
     required:true,
     type:String,
@@ -31,6 +35,7 @@ function validateFileDetails(details){
         path:Joi.string().min(3).required(),
         fileName:Joi.string().min(1).required(),
         extension:Joi.string().min(2).required(),
+        scheduledTime:Joi.number().integer().min(0).max(23).required()
     })
     return schema.validate(details)
 }

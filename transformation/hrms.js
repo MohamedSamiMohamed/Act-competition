@@ -1,4 +1,4 @@
-const sunConnection=require('../constants')
+const {sunConnection,hrmsColumns}=require('../constants')
 const mongoose = require('mongoose');
 var Connection = require('tedious').Connection;  
 var Request = require('tedious').Request;  
@@ -11,40 +11,13 @@ const { HrmsLog } = require('../models/hrmsModels/logs');
 
 let forceTransFlag=new Boolean (false);
 let forcedMonth;
-let mapping={
-    "JV_Report_Details_ID":0,
-    "Property_ID":1,
-    "User_ID":2,
-    "The_Year":3,
-    "The_Month":4,
-    "Account_Number":5,
-    "Account_Number_JV_Description":5,
-    "Jornal_Type":6,
-    "JV_Type":7,
-    "Amount_D":8,
-    "Amount_C":9,
-    "T0":10,
-    "T1":11,
-    "T2":12,
-    "T3":13,
-    "T4":14,
-    "T5":15,
-    "T6":16,
-    "T7":17,
-    "T8":18,
-    "T9":19,
-    "Cost_Center":20
-}
-
 //'0 * 30 3 *'
 //This function initiates transformation process by getting connection of hrms database for each user and his mapping configuration
 //then starting connection to SUN and his HRMS database and transform data between them according to the mapping configuration
-
-
 //This version will be run every month at 12 AM
 const job = schedule.scheduleJob('0 0 1 * *', async()=>{
     try{
-        let sunConn=await databaseConnect(sunConnection['sunConnection'])
+        let sunConn=await databaseConnect(sunConnection)
         let hrmsConnection=await connectionModel.find().select({"_id":0,"__v":0})
         if(hrmsConnection.length==0){
             return
@@ -69,7 +42,7 @@ async function forceTransform(requiredMonth,userId){
 try{
 forcedMonth=requiredMonth
 forceTransFlag=true
-let sunConn=await databaseConnect(sunConnection['sunConnection'])
+let sunConn=await databaseConnect(sunConnection)
 let hrmsConnection=await connectionModel.findOne({userID:userId}).select({"_id":0,"__v":0})
 if(!hrmsConnection){
     return
@@ -168,7 +141,7 @@ reaminString+=`('${headerID}','${rowsNum}',`
 rowsNum-=1
 trans.forEach(element=>{
     if(element.isConst===false){
-        let position=mapping[element.mappedVal]
+        let position=hrmsColumns[element.mappedVal]
         reaminString+=`'${row[position].value}',`
     }
     else{

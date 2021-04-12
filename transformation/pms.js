@@ -15,35 +15,41 @@ let forceTransFlag = new Boolean(false);
 let forcedMonth, forcedDay, forcedYear;
 
 //This function will run every day at 12 AM and upload data from PMS file to the database
-const job = schedule.scheduleJob('0 0 * * *', async () => {
-    try {
-        let sunConn = await databaseConnect(sunConnection['sunConnection']);
-
-        let details = await FileDetails.find({}).select({
+const job = schedule.scheduleJob(`0 * * * *`, async () => {
+        let date=new Date()
+        let details = await FileDetails.find({scheduledTime:date.getHours()}).select({
             "userID": 1,
             "path": 1,
             "fileName": 1,
             "extension": 1,
             "_id": 0
         });
-        details.forEach(async (element) => {
-            userId = element.userID;
-            path = element.path
-            file_name = element.fileName + element.extension
-            let trans = await sunConfig.findOne({
-                userID: userId
-            }).select({
-                "trans": 1,
-                "_id": 0
+        if(!details){
+            return
+        }
+        else{
+            try{
+                let sunConn = await databaseConnect(sunConnection['sunConnection']);
+                details.forEach(async (element) => {
+                userId = element.userID;
+                path = element.path
+                file_name = element.fileName + element.extension
+                let trans = await sunConfig.findOne({
+                    userID: userId
+                }).select({
+                    "trans": 1,
+                    "_id": 0
+                });
+                trans_array = trans.trans;
+                let pms = await getPMSData(sunConn, trans_array, userId, path, element.fileName, element.extension);
+                deleteFile(path, file_name);
             });
-            trans_array = trans.trans;
-            let pms = await getPMSData(sunConn, trans_array, userId, path, element.fileName, element.extension);
-            deleteFile(path, file_name);
-        });
 
-    } catch (err) {
+    } 
+    catch (err) {
         console.log(err.message)
     }
+}
 });
 
 //This function will be called if the day was retrieved 

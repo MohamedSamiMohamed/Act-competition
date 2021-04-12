@@ -28,6 +28,7 @@ router.post('/fileDetails',asyncMiddleWare(async(req,res)=>{
     else{
         const fileDetails= new FileDetails({
             userID: req.user._id,
+            scheduledTime: req.body.scheduledTime,
             path: req.body.path,
             fileName: req.body.fileName,
             extension: req.body.extension

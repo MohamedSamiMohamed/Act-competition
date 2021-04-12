@@ -1,4 +1,4 @@
-
+const {sunConnection,hrmsColumns} = require('./constants')
 const morgan=require('morgan')
 const Joi = require('joi');
 const mongoose = require('mongoose');
@@ -46,5 +46,3 @@ process.on('unhandledRejection',(ex)=>{
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => console.log(`Listening on port ${port}...`));
-
-//createLog("6071aec622130a30c42f2d61",4,4,2021)
