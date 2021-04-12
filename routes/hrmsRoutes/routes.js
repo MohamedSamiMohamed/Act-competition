@@ -75,6 +75,7 @@ router.put('/connection',asyncMiddleWare(async (req,res)=>{
         connection.userName=req.body.userName,
         connection.database= req.body.database,
         connection.password=req.body.password
+        await connection.save()
         return res.send("Connection string has been updated successfully"+ connection)
     }
 else{
@@ -144,6 +145,7 @@ router.put('/configuration',asyncMiddleWare(async (req,res)=>{
     let configured=await sunConfig.findOne({userID: req.user._id})
     if(configured){
         configured.trans=req.body.trans
+        await configured.save()
         return res.send("Configuration has been updated successfully")
     }
 else{
