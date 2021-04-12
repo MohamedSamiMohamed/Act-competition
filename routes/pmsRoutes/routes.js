@@ -212,13 +212,31 @@ router.post('/configuration',asyncMiddleWare(async(req, res) => {
 
 
 router.get('/configuration',asyncMiddleWare(async (req,res)=>{
-        let configured=await sunConfig.findOne({userID: req.user._id})
-        if(!configured){
-        return res.status(200).send(false)
+    let configured=await sunConfig.findOne({userID: req.user._id})
+    if(configured){
+        return res.send(_.pick(configured,['trans']))
     }
     else{
-        return res.status(200).send(true)
+        return res.status(400).send("This user hasn't uploaded a configuration yet")
+
     }
+}))
+
+router.put('/configuration',asyncMiddleWare(async(req,res)=>{
+    const result=validateConfiguration(req.body)
+    if(result.error){
+        return res.status(400).send(result.error.details[0].message)
+        
+    }
+    let configured=await sunConfig.findOne({userID: req.user._id})
+    if(configured){
+        configured.trans=req.body.trans 
+        await configured.save()
+        return res.send("Configuration has been updated successfully")
+    }
+else{
+    return res.status(400).send("This user hasn't uploaded a connection string yet")
+}
 }))
 
 router.delete('/configuration',asyncMiddleWare(async(req,res)=>{
