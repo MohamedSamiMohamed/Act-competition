@@ -104,7 +104,7 @@ router.post('/configuration',asyncMiddleWare(async(req, res) => {
     }
     let config=await sunConfig.findOne({userID: req.user._id})
 if(config){
-    return res.status(400).send('This user already uploaded connection string before')
+    return res.status(400).send('This user already uploaded configuration  before')
 }
     else{
         let trans=[]

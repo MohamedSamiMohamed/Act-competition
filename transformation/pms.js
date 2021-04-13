@@ -24,14 +24,16 @@ const job = schedule.scheduleJob(`0 * * * *`, async () => {
             "extension": 1,
             "_id": 0
         });
-        if(!details){
+        if(details.length==0){
             return
         }
         else{
+            //console.log(details)
             try{
-                let sunConn = await databaseConnect(sunConnection['sunConnection']);
+                
                 details.forEach(async (element) => {
                 userId = element.userID;
+                let variables = await Variables.findOne({userID: userId})
                 path = element.path
                 file_name = element.fileName + element.extension
                 let trans = await sunConfig.findOne({
@@ -41,11 +43,11 @@ const job = schedule.scheduleJob(`0 * * * *`, async () => {
                     "_id": 0
                 });
                 trans_array = trans.trans;
-                let pms = await getPMSData(sunConn, trans_array, userId, path, element.fileName, element.extension);
-                deleteFile(path, file_name);
+                let sunConn = await databaseConnect(sunConnection['sunConnection']);
+                let pms = await getPMSData(sunConn, trans_array, userId, path, element.fileName, element.extension,variables.skippedLines);
+                //deleteFile(path, file_name);
             });
-
-    } 
+    }
     catch (err) {
         console.log(err.message)
     }
@@ -119,7 +121,7 @@ async function getPMSData(sunConn, trans, userId, path, filename, extension, ski
 
 //This function is responsible for the insertion into SUN database headers (one row per transformation)
 async function insertIntoSunHeaders(sunConn) {
-    let requestString = "INSERT INTO PK1_PSTG_HDR (UPDATE_COUNT,LAST_CHANGE_USER_ID,LAST_CHANGE_DATETIME,CREATED_BY,CREATED_DATETIME,CREATION_TYPE ,DESCR,LAST_STATUS,POST_TYPE,POST_WRITE_TO_HOLD,POST_ROUGH_BOOK,POST_ALLOW_BAL_TRANS,POST_SUSPENSE_ACNT,POST_OTHER_ACNT,POST_BAL_BY,POST_DFLT_PERD,POST_RPT_ERR_ONLY,POST_SUPPRESS_SUB_MSG,POST_RPT_FMT,JRNL_TYPE,POST_RPT_ACNT,CNT_ORIG,CNT_REJECTED,CNT_BAL,CNT_REVERSALS,CNT_POSTED,CNT_SUBSTITUTED,CNT_PRINTED,POST_LDG,POST_ALLOW_OVER_BDGT,POST_ALLOW_SUSPNS_ACNT,CNT_ZERO_VAL_ENTRIES,JNL_NUM,NUM_OF_IMBALANCES,DR_AMT_POSTED,CR_AMT_POSTED,POST_TXN_REF_BAL) VALUES ('0','OFS',GETDATE() ,'OFS',GETDATE(),'LI','HRMS','0','2','1','0','0','999999999','999999999','1',0,1,1,'LIALL', 'HRM' ,'999999999','0','0','0','0','0','0','0','A','0','0','0','0','0','0.000','0.000','0') select @@identity"
+    let requestString = "INSERT INTO PK1_PSTG_HDR (UPDATE_COUNT,LAST_CHANGE_USER_ID,LAST_CHANGE_DATETIME,CREATED_BY,CREATED_DATETIME,CREATION_TYPE ,DESCR,LAST_STATUS,POST_TYPE,POST_WRITE_TO_HOLD,POST_ROUGH_BOOK,POST_ALLOW_BAL_TRANS,POST_SUSPENSE_ACNT,POST_OTHER_ACNT,POST_BAL_BY,POST_DFLT_PERD,POST_RPT_ERR_ONLY,POST_SUPPRESS_SUB_MSG,POST_RPT_FMT,JRNL_TYPE,POST_RPT_ACNT,CNT_ORIG,CNT_REJECTED,CNT_BAL,CNT_REVERSALS,CNT_POSTED,CNT_SUBSTITUTED,CNT_PRINTED,POST_LDG,POST_ALLOW_OVER_BDGT,POST_ALLOW_SUSPNS_ACNT,CNT_ZERO_VAL_ENTRIES,JNL_NUM,NUM_OF_IMBALANCES,DR_AMT_POSTED,CR_AMT_POSTED,POST_TXN_REF_BAL) VALUES ('0','OFS',GETDATE() ,'OFS',GETDATE(),'LI','PMS','0','2','1','0','0','999999999','999999999','1',0,1,1,'LIALL', 'PMS' ,'999999999','0','0','0','0','0','0','0','A','0','0','0','0','0','0.000','0.000','0') select @@identity"
 
     let headerID;
     return new Promise((resolve, reject) => {

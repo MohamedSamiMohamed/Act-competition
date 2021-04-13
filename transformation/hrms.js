@@ -17,12 +17,12 @@ let forcedMonth;
 //This version will be run every month at 12 AM
 const job = schedule.scheduleJob('0 0 1 * *', async()=>{
     try{
-        let sunConn=await databaseConnect(sunConnection)
         let hrmsConnection=await connectionModel.find().select({"_id":0,"__v":0})
         if(hrmsConnection.length==0){
             return
         }
         hrmsConnection.forEach(async (element)=>{
+            let sunConn=await databaseConnect(sunConnection)
             let userId=element.userID
             delete element['userID']
             let hrmsConn=await databaseConnect(element)
